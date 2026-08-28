@@ -42,54 +42,96 @@ source("epm-summarizer.R")
 
 source("analysis.R")
 
-results_path = paste0(today())
+results_path <- paste0(today())
 dir.create(paste0("./output/", results_path))
 
 # Every column that starts with "analysis" will be considered an inclusion set column and must only have either cells marked "INCLUDE" or empty cells (not included).
-inclusion_sets = read_excel("./other-data/inclusion_sets.xlsx", 1)
+inclusion_sets <- read_excel("./other-data/inclusion_sets.xlsx", 1)
 
-list_of_sets = colnames(inclusion_sets)[str_detect(colnames(inclusion_sets), "^analysis_")]
+list_of_sets <- colnames(inclusion_sets)[str_detect(
+  colnames(inclusion_sets),
+  "^analysis_"
+)]
 
 for (setcol in list_of_sets) {
   message("\n\n\n\n")
   message(setcol)
-  
-  if (!(setcol %in% c("analysis_only_80_power_a_posteriori_T", "analysis_only_80_power_a_posteriori_KNHA", "analysis_only_80_power_a_posteriori_bigexp"))) {
+
+  if (
+    !(setcol %in%
+      c(
+        "analysis_only_80_power_a_posteriori_T",
+        "analysis_only_80_power_a_posteriori_KNHA",
+        "analysis_only_80_power_a_posteriori_bigexp"
+      ))
+  ) {
     # Run analysis with z distribution only with inclusion sets also using z
     run_all_meta_analyses(
-      inclusion_set_column = setcol, save_results_to = results_path,
-      params = list(exclude_outliers = F, ma_dist = "z"), simulated = F
+      inclusion_set_column = setcol,
+      save_results_to = results_path,
+      params = list(exclude_outliers = F, ma_dist = "z"),
+      simulated = F
     )
   }
 
-  if (!(setcol %in% c("analysis_only_80_power_a_posteriori_Z", "analysis_only_80_power_a_posteriori_KNHA", "analysis_only_80_power_a_posteriori_bigexp"))) {
+  if (
+    !(setcol %in%
+      c(
+        "analysis_only_80_power_a_posteriori_Z",
+        "analysis_only_80_power_a_posteriori_KNHA",
+        "analysis_only_80_power_a_posteriori_bigexp"
+      ))
+  ) {
     # Run analysis with t distribution only with inclusion sets also using t
     run_all_meta_analyses(
-      inclusion_set_column = setcol, save_results_to = results_path,
-      params = list(exclude_outliers = F, ma_dist = "t"), simulated = F
+      inclusion_set_column = setcol,
+      save_results_to = results_path,
+      params = list(exclude_outliers = F, ma_dist = "t"),
+      simulated = F
     )
   }
 
-  if (!(setcol %in% c("analysis_only_80_power_a_posteriori_Z", "analysis_only_80_power_a_posteriori_T", "analysis_only_80_power_a_posteriori_bigexp"))) {
+  if (
+    !(setcol %in%
+      c(
+        "analysis_only_80_power_a_posteriori_Z",
+        "analysis_only_80_power_a_posteriori_T",
+        "analysis_only_80_power_a_posteriori_bigexp"
+      ))
+  ) {
     # Run analysis with t distribution only with inclusion sets also using t
     run_all_meta_analyses(
-      inclusion_set_column = setcol, save_results_to = results_path,
-      params = list(exclude_outliers = F, ma_dist = "knha"), simulated = F
+      inclusion_set_column = setcol,
+      save_results_to = results_path,
+      params = list(exclude_outliers = F, ma_dist = "knha"),
+      simulated = F
     )
   }
 
-  if (!(setcol %in% c("analysis_only_80_power_a_posteriori_Z", "analysis_only_80_power_a_posteriori_KNHA"))) {
+  if (
+    !(setcol %in%
+      c(
+        "analysis_only_80_power_a_posteriori_Z",
+        "analysis_only_80_power_a_posteriori_KNHA"
+      ))
+  ) {
     # Run analysis with bigexp and only with inclusion sets also using t
     run_all_meta_analyses(
-      inclusion_set_column = setcol, save_results_to = results_path,
-      params = list(exclude_outliers = F, ma_dist = "bigexp"), simulated = F
+      inclusion_set_column = setcol,
+      save_results_to = results_path,
+      params = list(exclude_outliers = F, ma_dist = "bigexp"),
+      simulated = F
     )
   }
-
 }
 
 # For every folder specified below with an analysis in the output folder, calculates the replications rates
-list_of_analyses = list.dirs(path = paste0("./output/", results_path), recursive = F, full.names = T)
+list_of_analyses <- list.dirs(
+  path = paste0("./output/", results_path),
+  recursive = F,
+  full.names = T
+)
+list_of_analyses <- list_of_analyses[file.exists(paste0(list_of_analyses, "/Replication Assessment by Experiment.tsv"))]
 
 for (analysis in list_of_analyses) {
   message("\n\n\n\n")
@@ -102,18 +144,27 @@ gather_all_rep_rates(list_of_analyses, paste0("./output/", results_path))
 
 # Plot specification curve for all analyses
 plot_specification_curve(results_path, include_method = T, suffix = "")
-plot_specification_curve(results_path, include_method = F, suffix = "-without-method")
+plot_specification_curve(
+  results_path,
+  include_method = F,
+  suffix = "-without-method"
+)
 
 # Build table of general numbers based on inclusion sets
 make_general_numbers_table(inclusion_sets)
 
 ##### Run the second part of the analysis, the correlations between predictors and replication success, for the same specified folders in output #####
-list_of_analyses = list.dirs(path = paste0("./output/", results_path), recursive = F, full.names = T)
+list_of_analyses <- list.dirs(
+  path = paste0("./output/", results_path),
+  recursive = F,
+  full.names = T
+)
+list_of_analyses <- list_of_analyses[file.exists(paste0(list_of_analyses, "/Replication Assessment by Experiment.tsv"))]
 
 # Prepares the predictor data, adjusting names and preprocessing predictor calculations
 source("predictor-data-prep.R")
 
-make_individual_graphs = T # Will make graphs of predictors x outcomes only
+make_individual_graphs <- T # Will make graphs of predictors x outcomes only
 
 # Run predictor x predictor analysis for ALL experiments (Done=Yes, UNIT=BRI) - only once
 # This ensures predictor correlations include all 143 replications, not just those in analysis sets
@@ -123,19 +174,31 @@ run_predictor_analysis_all_exps(list_of_analyses)
 for (analysis in list_of_analyses) {
   message("\n\n\n\n")
   message(analysis)
-  
-  pct1 = run_predictor_analysis_exp_level(analysis, make_individual_graphs)
-  pct2 = run_predictor_analysis_rep_level(analysis, make_individual_graphs)
+
+  pct1 <- run_predictor_analysis_exp_level(analysis, make_individual_graphs)
+  pct2 <- run_predictor_analysis_rep_level(analysis, make_individual_graphs)
   run_predictor_analysis_both_level(analysis, make_individual_graphs)
-  
+
   # Makes figures with table combined for better presentation
   plot_combined_cortable_predictor(pct1[[1]], pct2[[1]], analysis)
   plot_combined_cortable_rep_outcome(pct1[[2]], pct2[[2]], analysis)
   plot_combined_cortable(pct1[[3]], pct2[[3]], analysis)
-  
+
   # Makes kappa figures
-  pkexp = plot_kappa_exp(paste0(analysis, "/predictors/by experiment/Table for Predictor Correlations.tsv"), paste0(analysis, "/predictors/by experiment/"))
-  pkrep = plot_kappa_rep(paste0(analysis, "/predictors/by replication/Table for Predictor Correlations.tsv"), paste0(analysis, "/predictors/by replication/"))
+  pkexp <- plot_kappa_exp(
+    paste0(
+      analysis,
+      "/predictors/by experiment/Table for Predictor Correlations.tsv"
+    ),
+    paste0(analysis, "/predictors/by experiment/")
+  )
+  pkrep <- plot_kappa_rep(
+    paste0(
+      analysis,
+      "/predictors/by replication/Table for Predictor Correlations.tsv"
+    ),
+    paste0(analysis, "/predictors/by replication/")
+  )
   combine_kappa_plots(pkexp, pkrep, paste0(analysis, "/predictors/"))
 }
 
@@ -160,5 +223,3 @@ source("prepare-figures.R")
 # Dump session info for reproducibility
 p_load(sessioninfo)
 writeLines(capture.output(session_info()), "R session info.txt")
-
-

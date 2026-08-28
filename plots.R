@@ -197,6 +197,8 @@ plot_cortable <- function(FDATA, vars1, vars2, title, fn, show_label, make_indiv
         col2,
         "t Value",
         "-log ES Ratio",
+        "Replication Effect Size",
+        "SMD Effect Size",
         "Original in replication's 95% PI"
       )),
       fill = sign(rho) * -log10(p.value),
@@ -222,6 +224,8 @@ plot_cortable <- function(FDATA, vars1, vars2, title, fn, show_label, make_indiv
       x = col1, y = fct_rev(fct_relevel(
         col2, "t Value",
         "-log ES Ratio",
+        "Replication Effect Size",
+        "SMD Effect Size",
         "Original in replication's 95% PI"
       )),
       fill = sign(pearson_r) * -log10(pearson_p),
@@ -442,6 +446,8 @@ plot_cortable_alternative <- function(FDATA, FDATA_EXP, FDATA_REP, vars1, vars2,
       x = col1, y = fct_rev(fct_relevel(
         col2, "t Value",
         "-log ES Ratio",
+        "Replication Effect Size",
+        "SMD Effect Size",
         "Original in replication's 95% PI"
       )),
       label = label_p
@@ -724,6 +730,8 @@ plot_cortable_cluster <- function(FDATA, vars1, vars2, title, fn, show_label, ma
         col2,
         "t Value",
         "-log ES Ratio",
+        "Replication Effect Size",
+        "SMD Effect Size",
         "Original in replication's 95% PI"
       )),
       label = label
@@ -852,6 +860,8 @@ plot_cortable_cluster <- function(FDATA, vars1, vars2, title, fn, show_label, ma
         col2,
         "t Value",
         "-log ES Ratio",
+        "Replication Effect Size",
+        "SMD Effect Size",
         "Original in replication's 95% PI"
       )),
       fill = sign(pearson_r) * -log10(pearson_p),
@@ -1704,18 +1714,32 @@ plot_effect_correlation <- function(rep_summary_folder, df, fn, tt) {
   r1 <- cor.test(x = df$original_es, y = df$replication_es, na.action = na.omit(), method = "pearson")
   r2 <- cor.test(x = df$original_es, y = df$replication_es, na.action = na.omit(), method = "spearman")
 
+  valid_idx <- !is.na(df$original_es) & !is.na(df$replication_es)
+  x_clean <- df$original_es[valid_idx]
+  y_clean <- df$replication_es[valid_idx]
+
+  spearman_ci <- tryCatch({
+    sci <- spearmanCI::spearmanCI(x_clean, y_clean, level = 0.95, plot = FALSE)
+    c(sci[1], sci[2])
+  }, error = function(e) {
+    z <- 0.5 * log((1 + r2$estimate) / (1 - r2$estimate))
+    se <- 1 / sqrt(max(length(x_clean) - 3, 1))
+    c(tanh(z - 1.96 * se), tanh(z + 1.96 * se))
+  })
+
+  r1_ci_str <- paste0("[95% CI: ", round(r1$conf.int[1], 2), ", ", round(r1$conf.int[2], 2), "]")
+  r2_ci_str <- paste0("[95% CI: ", round(spearman_ci[1], 2), ", ", round(spearman_ci[2], 2), "]")
+
   rcor_label <- paste0(
-    "Pearson's R = ",
-    signif(r1$estimate, 2), " (p = ", signif(r1$p.value, 2), ")",
-    "\nSpearman's ρ = ",
-    signif(r2$estimate, 2), " (p = ", signif(r2$p.value, 2), ")"
+    "Pearson's R = ", round(r1$estimate, 2), " ", r1_ci_str, " (p = ", signif(r1$p.value, 2), ")\n",
+    "Spearman's ρ = ", round(r2$estimate, 2), " ", r2_ci_str, " (p = ", signif(r2$p.value, 2), ")"
   )
 
   p <- ggplot(df) +
     aes(x = original_es, y = replication_es, color = Method) +
     geom_point(size = 3, alpha = 0.5) +
     geom_abline(slope = 1, intercept = 0, linetype = "dashed", linewidth = 0.7, color = bri_color[["mid"]]) +
-    annotate("text", label = rcor_label, x = Inf, y = -Inf, label = "Some text", vjust = -0.5, hjust = 1.05) +
+    annotate("text", label = rcor_label, x = Inf, y = -Inf, vjust = -0.5, hjust = 1.05, size = 3) +
     scale_color_manual(values = c(bri_color[["epm"]], bri_color[["mtt"]], bri_color[["pcr"]])) +
     labs(x = "Original Effect Size", y = "Replication Effect Size", title = tt, color = "Method:") +
     bri_theme +

@@ -792,13 +792,15 @@ ordered_cols_tbl_2 <- tibble(
   pull(colname)
 
 tbl_2 <- tbl_2 |>
-  select(all_of(ordered_cols_tbl_2)) |>
-  dplyr::rename(`Primary` = primary_ALL_PCR_MTT) |>
-  dplyr::rename(`Lab's choice` = included_by_lab_ALL_PCR_MTT) |>
-  dplyr::rename(`All Exps` = all_exps_lab_units_ALL_PCR_MTT) |>
-  dplyr::rename(`≥ 2 copies` = at_least_2_reps_ALL_PCR_MTT) |>
-  dplyr::rename(`3 copies` = only_3_reps_ALL_PCR_MTT) |>
-  dplyr::rename(`≥80% power` = only_80_power_a_posteriori_T_ALL_PCR_MTT)
+  select(any_of(ordered_cols_tbl_2)) |>
+  dplyr::rename(any_of(c(
+    `Primary` = "primary_ALL_PCR_MTT",
+    `Lab's choice` = "included_by_lab_ALL_PCR_MTT",
+    `All Exps` = "all_exps_lab_units_ALL_PCR_MTT",
+    `≥ 2 copies` = "at_least_2_reps_ALL_PCR_MTT",
+    `3 copies` = "only_3_reps_ALL_PCR_MTT",
+    `≥80% power` = "only_80_power_a_posteriori_T_ALL_PCR_MTT"
+  )))
 
 footer_text_tbl_2 <- "Replication rates for the primary and secondary analyses. Effect size comparisons are based on random-effects meta-analysis, while same-sign significance is based on a fixed meta-analysis estimate. The prediction interval criterion only uses experiments with more than one replication. Subsets for secondary analyses include all experiments judged valid by the replicating lab (Lab’s Choice), all concluded experiments (All Exps), both of which use the experimental unit as defined by the lab, only experiments with at least 2 and 3 replications, and only experiments with ≥ 80% a posteriori power. All statistical tests use the t distribution. PI, prediction interval; CI, confidence interval. For more information on replication criteria, see https://osf.io/9rnuj."
 
@@ -2348,13 +2350,15 @@ ordered_cols_tbl_s14 <- tibble(
   pull(colname)
 
 tbl_s14 <- tbl_s14 |>
-  select(all_of(ordered_cols_tbl_s14)) |>
-  dplyr::rename(`Primary` = primary_ALL_PCR_MTT) |>
-  dplyr::rename(`Lab's choice` = included_by_lab_ALL_PCR_MTT) |>
-  dplyr::rename(`All Exps` = all_exps_lab_units_ALL_PCR_MTT) |>
-  dplyr::rename(`≥ 2 copies` = at_least_2_reps_ALL_PCR_MTT) |>
-  dplyr::rename(`3 copies` = only_3_reps_ALL_PCR_MTT) |>
-  dplyr::rename(`≥80% power` = only_80_power_a_posteriori_Z_ALL_PCR_MTT)
+  select(any_of(ordered_cols_tbl_s14)) |>
+  dplyr::rename(any_of(c(
+    `Primary` = "primary_ALL_PCR_MTT",
+    `Lab's choice` = "included_by_lab_ALL_PCR_MTT",
+    `All Exps` = "all_exps_lab_units_ALL_PCR_MTT",
+    `≥ 2 copies` = "at_least_2_reps_ALL_PCR_MTT",
+    `3 copies` = "only_3_reps_ALL_PCR_MTT",
+    `≥80% power` = "only_80_power_a_posteriori_Z_ALL_PCR_MTT"
+  )))
 
 footer_text_tbl_s14 <- "Replication rates for the primary and secondary analyses. Results are the same as in Table 2, but using a z distribution for statistical tests and prediction intervals derived from meta-analyses (as the distribution was not specified in the primary analysis). Same-sign significance is based on a fixed meta-analysis estimate, while effect size comparisons are based on random-effects meta-analysis. Subsets for secondary analyses include all experiments judged valid by the replicating lab (Lab’s Choice), all concluded experiments (using the lab unit as defined by the replicating lab), only experiments with at least 2 and 3 copies, and only experiments with ≥ 80% a posteriori power (using a z distribution, which leads to a different subset than that included in Table 2 and Table S8. PI, prediction interval, CI, confidence interval. For more information on replication criteria, see https://osf.io/9rnuj."
 
@@ -2437,13 +2441,15 @@ ordered_cols_tbl_s16 <- tibble(
   pull(colname)
 
 tbl_s16 <- tbl_s16 |>
-  select(all_of(ordered_cols_tbl_s16)) |>
-  dplyr::rename(`Primary` = primary_ALL_PCR_MTT) |>
-  dplyr::rename(`Lab's choice` = included_by_lab_ALL_PCR_MTT) |>
-  dplyr::rename(`All Exps` = all_exps_lab_units_ALL_PCR_MTT) |>
-  dplyr::rename(`≥ 2 copies` = at_least_2_reps_ALL_PCR_MTT) |>
-  dplyr::rename(`3 copies` = only_3_reps_ALL_PCR_MTT) |>
-  dplyr::rename(`≥80% power` = only_80_power_a_posteriori_KNHA_ALL_PCR_MTT)
+  select(any_of(ordered_cols_tbl_s16)) |>
+  dplyr::rename(any_of(c(
+    `Primary` = "primary_ALL_PCR_MTT",
+    `Lab's choice` = "included_by_lab_ALL_PCR_MTT",
+    `All Exps` = "all_exps_lab_units_ALL_PCR_MTT",
+    `≥ 2 copies` = "at_least_2_reps_ALL_PCR_MTT",
+    `3 copies` = "only_3_reps_ALL_PCR_MTT",
+    `≥80% power` = "only_80_power_a_posteriori_KNHA_ALL_PCR_MTT"
+  )))
 
 footer_text_tbl_s16 <- "Replication rates for the primary and secondary analyses. Results are the same as in Table 2, but using a knha distribution for statistical tests and prediction intervals derived from meta-analyses (as the distribution was not specified in the primary analysis). Same-sign significance is based on a fixed meta-analysis estimate, while effect size comparisons are based on random-effects meta-analysis. Subsets for secondary analyses include all experiments judged valid by the replicating lab (Lab’s Choice), all concluded experiments (using the lab unit as defined by the replicating lab), only experiments with at least 2 and 3 copies, and only experiments with ≥ 80% a posteriori power (using a z distribution, which leads to a different subset than that included in Table 2 and Table S8. PI, prediction interval, CI, confidence interval. For more information on replication criteria, see https://osf.io/9rnuj."
 
@@ -2697,11 +2703,13 @@ ordered_cols_tbl_s20 <- tibble(
   pull(colname)
 
 tbl_s20 <- tbl_s20 |>
-  select(all_of(ordered_cols_tbl_s20)) |>
-  dplyr::rename(`Primary (Log values)` = primary_PCR_t) |>
-  dplyr::rename(`Primary (Linear values)` = primary_ALTPCR_t) |>
-  dplyr::rename(`All experiments (Log values)` = all_exps_lab_units_PCR_t) |>
-  dplyr::rename(`All experiments (Linear values)` = all_exps_lab_units_ALTPCR_t)
+  select(any_of(ordered_cols_tbl_s20)) |>
+  dplyr::rename(any_of(c(
+    `Primary (Log values)` = "primary_PCR_t",
+    `Primary (Linear values)` = "primary_ALTPCR_t",
+    `All experiments (Log values)` = "all_exps_lab_units_PCR_t",
+    `All experiments (Linear values)` = "all_exps_lab_units_ALTPCR_t"
+  )))
 
 footer_text_tbl_s20 <- "Log values columns show results of analysis aggregating ΔCt values for real-time PCR or relative expression in log2 scale for conventional PCR, as in the primary analysis. Linear values columns show results aggregating linearized values (usually 2-ΔΔCt) for real-time PCR and relative expression in linear scale for conventional PCR, as originally planned in the protocols. Same-sign significance is based on a fixed meta-analysis estimate, while effect size comparisons are based on random-effects meta-analysis. All statistical tests use the t distribution. PI, prediction interval, CI, confidence interval. For more information on replication criteria, see the registered replication protocol at https://osf.io/9rnuj."
 
@@ -2781,11 +2789,13 @@ ordered_cols_tbl_s19 <- tibble(
   pull(colname)
 
 tbl_s19 <- tbl_s19 |>
-  select(all_of(ordered_cols_tbl_s19)) |>
-  dplyr::rename(`Primary (Paired)` = primary_MTT_t) |>
-  dplyr::rename(`Primary (Original)` = primary_ALTMTT_t) |>
-  dplyr::rename(`All experiments (Paired)` = all_exps_lab_units_MTT_t) |>
-  dplyr::rename(`All experiments (Original)` = all_exps_lab_units_ALTMTT_t)
+  select(any_of(ordered_cols_tbl_s19)) |>
+  dplyr::rename(any_of(c(
+    `Primary (Paired)` = "primary_MTT_t",
+    `Primary (Original)` = "primary_ALTMTT_t",
+    `All experiments (Paired)` = "all_exps_lab_units_MTT_t",
+    `All experiments (Original)` = "all_exps_lab_units_ALTMTT_t"
+  )))
 
 ### Coefficient of variation row for MTT replications ----
 # Load replication-level assessment data for primary and all experiments
@@ -2797,13 +2807,19 @@ df_rep_primary_altmtt <- read_tsv(paste0("output/", results_path, "/primary t/Re
   filter(str_detect(EXP, "^ALTMTT")) |>
   mutate(Method = "ALTMTT")
 
-df_rep_allexp_mtt <- read_tsv(paste0("output/", results_path, "/all_exps_lab_units t/Replication Assessment by Replication.tsv"), show_col_types = FALSE) |>
-  filter(str_detect(EXP, "^MTT")) |>
-  mutate(Method = "MTT")
+allexp_t_path <- paste0("output/", results_path, "/all_exps_lab_units t/Replication Assessment by Replication.tsv")
+if (file.exists(allexp_t_path)) {
+  df_rep_allexp_mtt <- read_tsv(allexp_t_path, show_col_types = FALSE) |>
+    filter(str_detect(EXP, "^MTT")) |>
+    mutate(Method = "MTT")
 
-df_rep_allexp_altmtt <- read_tsv(paste0("output/", results_path, "/all_exps_lab_units t/Replication Assessment by Replication.tsv"), show_col_types = FALSE) |>
-  filter(str_detect(EXP, "^ALTMTT")) |>
-  mutate(Method = "ALTMTT")
+  df_rep_allexp_altmtt <- read_tsv(allexp_t_path, show_col_types = FALSE) |>
+    filter(str_detect(EXP, "^ALTMTT")) |>
+    mutate(Method = "ALTMTT")
+} else {
+  df_rep_allexp_mtt <- df_rep_primary_mtt[0, ]
+  df_rep_allexp_altmtt <- df_rep_primary_altmtt[0, ]
+}
 
 # Calculate median (range) for each combination
 cv_primary_paired <- df_rep_primary_mtt |>
@@ -3478,6 +3494,31 @@ tbl_n_exp_lab_all <- df_inclusion_sets |>
 
 ### Saving ------------------------------------------------------------------
 
+# Task 4: Supplementary table with sample size comparison (normal t-test vs log ratio of means)
+df_ss_comp <- read_tsv("./other-data/Original Experiments Statistical Summaries.tsv", show_col_types = FALSE) |>
+  select(
+    EXP,
+    `Estimated Sample Size for 95% power`,
+    `Estimated Sample Size for 95% power (Log Ratio)`
+  ) |>
+  rename(
+    `Experiment Code` = EXP,
+    `Sample Size (Normal t-test, 95% Power)` = `Estimated Sample Size for 95% power`,
+    `Sample Size (Log Ratio of Means, 95% Power)` = `Estimated Sample Size for 95% power (Log Ratio)`
+  ) |>
+  mutate(
+    `Sample Size (Normal t-test, 95% Power)` = round(`Sample Size (Normal t-test, 95% Power)`, 2),
+    `Sample Size (Log Ratio of Means, 95% Power)` = round(`Sample Size (Log Ratio of Means, 95% Power)`, 2)
+  )
+
+tbl_sample_size_comparison <- df_ss_comp |>
+  flextable() |>
+  set_caption("Supplementary Table: Sample size comparison for 95% power using normal t-tests vs. log ratio of means") |>
+  autofit()
+
+dir.create(paste0("output/", results_path, "/_manuscript figures and tables/tables"), showWarnings = FALSE, recursive = TRUE)
+save_as_docx(tbl_sample_size_comparison, path = paste0("output/", results_path, "/_manuscript figures and tables/tables/Supplementary Table - Sample Size Comparison.docx"))
+
 doc <- doc |>
   body_add_break(pos = "after") |>
   body_add_flextable(fleiss_kappa_table) |>
@@ -3488,7 +3529,11 @@ doc <- doc |>
   body_add_par(run_linebreak()) |>
   body_add_par(run_linebreak()) |>
   body_add_par(run_linebreak()) |>
-  body_add_flextable(tbl_n_exp_lab_all)
+  body_add_flextable(tbl_n_exp_lab_all) |>
+  body_add_par(run_linebreak()) |>
+  body_add_par(run_linebreak()) |>
+  body_add_par(run_linebreak()) |>
+  body_add_flextable(tbl_sample_size_comparison)
 
 print(doc, target = paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Document - Text-Cited Numbers.docx"))
 

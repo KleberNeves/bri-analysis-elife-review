@@ -21,6 +21,8 @@ run_predictor_analysis_exp_level <- function(replication_datapath, make_plots) {
       SignalErrorAll,
       t_score,
       log_es_ratio,
+      corrected_sign_replication_es,
+      smd_effect_size,
       OriginalCV
     )
 
@@ -34,6 +36,8 @@ run_predictor_analysis_exp_level <- function(replication_datapath, make_plots) {
     "Signal error",
     "t Value",
     "Log ES Ratio",
+    "Replication Effect Size",
+    "SMD Effect Size",
     "Original CV"
   )
 
@@ -56,7 +60,9 @@ run_predictor_analysis_exp_level <- function(replication_datapath, make_plots) {
   )
   continuous_rep_outcome <- c(
     "t Value",
-    "Log ES Ratio"
+    "Log ES Ratio",
+    "Replication Effect Size",
+    "SMD Effect Size"
   )
 
   # Correlation table and plot between predictors
@@ -69,7 +75,7 @@ run_predictor_analysis_exp_level <- function(replication_datapath, make_plots) {
 
   # Correlation table and plot between replication criteria
   print("Building correlation table, replication outcomes x replication outcomes ...")
-  vars1 <- c(categorical_rep_outcome, continuous_rep_outcome)
+  vars1 <- c(continuous_rep_outcome, categorical_rep_outcome)
   vars2 <- vars1
 
   p_rep <- plot_cortable(FDATA, vars1, vars2, "Correlation between replication criteria", paste0(replication_datapath, "/predictors/by experiment/rep outcome x rep outcome"), show_label = T, make_individual_plots = F)
@@ -78,7 +84,7 @@ run_predictor_analysis_exp_level <- function(replication_datapath, make_plots) {
   # Correlation table and plot between predictors and replication outcomes
   print("Building correlation table, predictors x replication outcomes ...")
   vars1 <- predictors
-  vars2 <- c(categorical_rep_outcome, continuous_rep_outcome)
+  vars2 <- c(continuous_rep_outcome, categorical_rep_outcome)
 
   p_pred_rep <- plot_cortable_cluster(FDATA, vars1, vars2, "Correlation between predictors and replication", paste0(replication_datapath, "/predictors/by experiment/predictor x rep outcome"), show_label = T, make_individual_plots = make_plots)
 
@@ -99,7 +105,9 @@ run_predictor_analysis_rep_level <- function(replication_datapath, make_plots) {
       REP_Individual_IndivSubjective,
       SignalErrorAll_Individual,
       t_score_individual,
-      log_es_ratio_individual
+      log_es_ratio_individual,
+      corrected_sign_replication_es,
+      smd_effect_size
     )
 
   colnames(REP_DATA) <- c(
@@ -110,7 +118,9 @@ run_predictor_analysis_rep_level <- function(replication_datapath, make_plots) {
     "Subjective",
     "Signal error",
     "t Value",
-    "Log ES Ratio"
+    "Log ES Ratio",
+    "Replication Effect Size",
+    "SMD Effect Size"
   )
 
   # Merge with predictor data
@@ -129,7 +139,9 @@ run_predictor_analysis_rep_level <- function(replication_datapath, make_plots) {
   )
   continuous_rep_outcome <- c(
     "t Value",
-    "Log ES Ratio"
+    "Log ES Ratio",
+    "Replication Effect Size",
+    "SMD Effect Size"
   )
 
   # Correlation table and plot between predictors
@@ -142,7 +154,7 @@ run_predictor_analysis_rep_level <- function(replication_datapath, make_plots) {
 
   # Correlation table and plot between replication criteria
   print("Building correlation table, replication outcomes x replication outcomes ...")
-  vars1 <- c(categorical_rep_outcome, continuous_rep_outcome)
+  vars1 <- c(continuous_rep_outcome, categorical_rep_outcome)
   vars2 <- vars1
 
   p_rep <- plot_cortable(FDATA, vars1, vars2, "Correlation between replication criteria", paste0(replication_datapath, "/predictors/by replication/rep outcome x rep outcome"), show_label = T, make_individual_plots = F)
@@ -151,7 +163,7 @@ run_predictor_analysis_rep_level <- function(replication_datapath, make_plots) {
   # Correlation table and plot between predictors and replication outcomes
   print("Building correlation table, predictors x replication outcomes ...")
   vars1 <- predictors
-  vars2 <- c(categorical_rep_outcome, continuous_rep_outcome)
+  vars2 <- c(continuous_rep_outcome, categorical_rep_outcome)
 
   p_pred_rep <- plot_cortable_cluster(FDATA, vars1, vars2, "Correlation between predictors and replication", paste0(replication_datapath, "/predictors/by replication/predictor x rep outcome"), show_label = T, make_individual_plots = make_plots)
 
@@ -165,13 +177,13 @@ run_predictor_analysis_both_level <- function(replication_datapath, make_plots) 
 
   # EXP - Gets predictor data
   FDATA_EXP <- read_tsv(paste0(replication_datapath, "/predictors/by experiment/Table for Predictor Correlations.tsv")) |>
-    select(-c(2:9), -"DOI") |>
+    select(-any_of(c("Original in replication PI", "Replication in original CI", "Same sense significance", "Voting (with ties)", "Subjective (with ties)", "Signal error", "t Value", "Log ES Ratio", "Replication Effect Size", "SMD Effect Size", "DOI"))) |>
     relocate(`Original CV`, .after = `p-value`) |>
     rename(`University Ranking (Experiment)` = `Institution Ranking`)
 
   # REP - Gets predictor data
   FDATA_REP <- read_tsv(paste0(replication_datapath, "/predictors/by replication/Table for Predictor Correlations.tsv")) |>
-    select(-c(3:8)) |>
+    select(-any_of(c("Replication in original CI", "Same sense significance", "Subjective", "Signal error", "t Value", "Log ES Ratio", "Replication Effect Size", "SMD Effect Size"))) |>
     rename(`University Ranking (Replication)` = `Institution Ranking`)
 
   # Join
