@@ -1,0 +1,1441 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "$comment": "Panels A–C reproduce the data in the existing standalone specifications; panel D counts the 60 audited rows in the Original Articles worksheet.",
+  "description": "Figure S3. Geographic distribution of registered and participating labs and selected original articles. Maps show the number per Brazilian state of laboratories that registered for the project (A), received experiments for replication (B), or contributed data (C), and of selected original articles, assigned by the primary Brazilian affiliation of their corresponding author (D). Data for panels A–C are presented in Table S1; the 60 selected articles are summarized in Table S3.",
+  "background": "white",
+  "datasets": {
+    "panel_a_counts": [
+      {
+        "id": "Acre",
+        "n": 1,
+        "centroid": [
+          -70.812,
+          -9.189
+        ]
+      },
+      {
+        "id": "Alagoas",
+        "n": 1,
+        "centroid": [
+          -36.429,
+          -10.465
+        ]
+      },
+      {
+        "id": "Amapá",
+        "n": 1,
+        "centroid": [
+          -51.796,
+          1.413
+        ]
+      },
+      {
+        "id": "Amazonas",
+        "n": 1,
+        "centroid": [
+          -65.421,
+          -5.416
+        ]
+      },
+      {
+        "id": "Bahia",
+        "n": 1,
+        "centroid": [
+          -41.728,
+          -12.97
+        ]
+      },
+      {
+        "id": "Ceará",
+        "n": 1,
+        "centroid": [
+          -39.53,
+          -5.498
+        ]
+      },
+      {
+        "id": "Espírito Santo",
+        "n": 1,
+        "centroid": [
+          -40.276,
+          -19.883
+        ]
+      },
+      {
+        "id": "Goiás",
+        "n": 1,
+        "centroid": [
+          -49.706,
+          -16.827
+        ]
+      },
+      {
+        "id": "Maranhão",
+        "n": 1,
+        "centroid": [
+          -45.304,
+          -5.614
+        ]
+      },
+      {
+        "id": "Mato Grosso",
+        "n": 1,
+        "centroid": [
+          -55.541,
+          -13.681
+        ]
+      },
+      {
+        "id": "Mato Grosso do Sul",
+        "n": 0,
+        "centroid": [
+          -54.533,
+          -20.772
+        ]
+      },
+      {
+        "id": "Minas Gerais",
+        "n": 9,
+        "centroid": [
+          -44.598,
+          -19.412
+        ]
+      },
+      {
+        "id": "Pará",
+        "n": 0,
+        "centroid": [
+          -52.297,
+          -3.416
+        ]
+      },
+      {
+        "id": "Paraíba",
+        "n": 1,
+        "centroid": [
+          -36.107,
+          -7.9
+        ]
+      },
+      {
+        "id": "Paraná",
+        "n": 4,
+        "centroid": [
+          -51.665,
+          -25.101
+        ]
+      },
+      {
+        "id": "Pernambuco",
+        "n": 2,
+        "centroid": [
+          -37.591,
+          -9.113
+        ]
+      },
+      {
+        "id": "Piauí",
+        "n": 0,
+        "centroid": [
+          -42.832,
+          -7.718
+        ]
+      },
+      {
+        "id": "Rio de Janeiro",
+        "n": 28,
+        "centroid": [
+          -42.4103,
+          -22.909
+        ]
+      },
+      {
+        "id": "Rio Grande do Norte",
+        "n": 3,
+        "centroid": [
+          -36.588,
+          -6.394
+        ]
+      },
+      {
+        "id": "Rio Grande do Sul",
+        "n": 9,
+        "centroid": [
+          -53.215,
+          -30.034
+        ]
+      },
+      {
+        "id": "Rondônia",
+        "n": 1,
+        "centroid": [
+          -63.315,
+          -11.226
+        ]
+      },
+      {
+        "id": "Roraima",
+        "n": 0,
+        "centroid": [
+          -61.443,
+          2.737
+        ]
+      },
+      {
+        "id": "Santa Catarina",
+        "n": 6,
+        "centroid": [
+          -49.575,
+          -27.998
+        ]
+      },
+      {
+        "id": "São Paulo",
+        "n": 22,
+        "centroid": [
+          -49.379,
+          -22.781
+        ]
+      },
+      {
+        "id": "Sergipe",
+        "n": 1,
+        "centroid": [
+          -37.449,
+          -11.27
+        ]
+      },
+      {
+        "id": "Tocantins",
+        "n": 0,
+        "centroid": [
+          -48.297,
+          -10.184
+        ]
+      },
+      {
+        "id": "DF",
+        "n": 1,
+        "centroid": [
+          -47.929,
+          -15.48
+        ]
+      }
+    ],
+    "panel_b_counts": [
+      {
+        "id": "Acre",
+        "n": 0,
+        "centroid": [
+          -70.812,
+          -9.189
+        ]
+      },
+      {
+        "id": "Alagoas",
+        "n": 1,
+        "centroid": [
+          -36.429,
+          -10.465
+        ]
+      },
+      {
+        "id": "Amapá",
+        "n": 1,
+        "centroid": [
+          -51.796,
+          1.413
+        ]
+      },
+      {
+        "id": "Amazonas",
+        "n": 1,
+        "centroid": [
+          -65.421,
+          -5.416
+        ]
+      },
+      {
+        "id": "Bahia",
+        "n": 1,
+        "centroid": [
+          -41.728,
+          -12.97
+        ]
+      },
+      {
+        "id": "Ceará",
+        "n": 1,
+        "centroid": [
+          -39.53,
+          -5.498
+        ]
+      },
+      {
+        "id": "Espírito Santo",
+        "n": 1,
+        "centroid": [
+          -40.276,
+          -19.883
+        ]
+      },
+      {
+        "id": "Goiás",
+        "n": 0,
+        "centroid": [
+          -49.706,
+          -16.827
+        ]
+      },
+      {
+        "id": "Maranhão",
+        "n": 0,
+        "centroid": [
+          -45.304,
+          -5.614
+        ]
+      },
+      {
+        "id": "Mato Grosso",
+        "n": 0,
+        "centroid": [
+          -55.541,
+          -13.681
+        ]
+      },
+      {
+        "id": "Mato Grosso do Sul",
+        "n": 0,
+        "centroid": [
+          -54.533,
+          -20.772
+        ]
+      },
+      {
+        "id": "Minas Gerais",
+        "n": 9,
+        "centroid": [
+          -44.598,
+          -19.412
+        ]
+      },
+      {
+        "id": "Pará",
+        "n": 0,
+        "centroid": [
+          -52.297,
+          -3.416
+        ]
+      },
+      {
+        "id": "Paraíba",
+        "n": 1,
+        "centroid": [
+          -36.107,
+          -7.9
+        ]
+      },
+      {
+        "id": "Paraná",
+        "n": 4,
+        "centroid": [
+          -51.665,
+          -25.101
+        ]
+      },
+      {
+        "id": "Pernambuco",
+        "n": 1,
+        "centroid": [
+          -37.591,
+          -9.113
+        ]
+      },
+      {
+        "id": "Piauí",
+        "n": 0,
+        "centroid": [
+          -42.832,
+          -7.718
+        ]
+      },
+      {
+        "id": "Rio de Janeiro",
+        "n": 20,
+        "centroid": [
+          -42.4103,
+          -22.909
+        ]
+      },
+      {
+        "id": "Rio Grande do Norte",
+        "n": 3,
+        "centroid": [
+          -36.588,
+          -6.394
+        ]
+      },
+      {
+        "id": "Rio Grande do Sul",
+        "n": 9,
+        "centroid": [
+          -53.215,
+          -30.034
+        ]
+      },
+      {
+        "id": "Rondônia",
+        "n": 0,
+        "centroid": [
+          -63.315,
+          -11.226
+        ]
+      },
+      {
+        "id": "Roraima",
+        "n": 0,
+        "centroid": [
+          -61.443,
+          2.737
+        ]
+      },
+      {
+        "id": "Santa Catarina",
+        "n": 4,
+        "centroid": [
+          -49.575,
+          -27.998
+        ]
+      },
+      {
+        "id": "São Paulo",
+        "n": 16,
+        "centroid": [
+          -49.379,
+          -22.781
+        ]
+      },
+      {
+        "id": "Sergipe",
+        "n": 1,
+        "centroid": [
+          -37.449,
+          -11.27
+        ]
+      },
+      {
+        "id": "Tocantins",
+        "n": 0,
+        "centroid": [
+          -48.297,
+          -10.184
+        ]
+      },
+      {
+        "id": "DF",
+        "n": 1,
+        "centroid": [
+          -47.929,
+          -15.48
+        ]
+      }
+    ],
+    "panel_c_counts": [
+      {
+        "id": "Acre",
+        "n": 0,
+        "centroid": [
+          -70.812,
+          -9.189
+        ]
+      },
+      {
+        "id": "Alagoas",
+        "n": 1,
+        "centroid": [
+          -36.429,
+          -10.465
+        ]
+      },
+      {
+        "id": "Amapá",
+        "n": 0,
+        "centroid": [
+          -51.796,
+          1.413
+        ]
+      },
+      {
+        "id": "Amazonas",
+        "n": 0,
+        "centroid": [
+          -65.421,
+          -5.416
+        ]
+      },
+      {
+        "id": "Bahia",
+        "n": 1,
+        "centroid": [
+          -41.728,
+          -12.97
+        ]
+      },
+      {
+        "id": "Ceará",
+        "n": 0,
+        "centroid": [
+          -39.53,
+          -5.498
+        ]
+      },
+      {
+        "id": "Espírito Santo",
+        "n": 1,
+        "centroid": [
+          -40.276,
+          -19.883
+        ]
+      },
+      {
+        "id": "Goiás",
+        "n": 0,
+        "centroid": [
+          -49.706,
+          -16.827
+        ]
+      },
+      {
+        "id": "Maranhão",
+        "n": 0,
+        "centroid": [
+          -45.304,
+          -5.614
+        ]
+      },
+      {
+        "id": "Mato Grosso",
+        "n": 0,
+        "centroid": [
+          -55.541,
+          -13.681
+        ]
+      },
+      {
+        "id": "Mato Grosso do Sul",
+        "n": 0,
+        "centroid": [
+          -54.533,
+          -20.772
+        ]
+      },
+      {
+        "id": "Minas Gerais",
+        "n": 7,
+        "centroid": [
+          -44.598,
+          -19.412
+        ]
+      },
+      {
+        "id": "Pará",
+        "n": 0,
+        "centroid": [
+          -52.297,
+          -3.416
+        ]
+      },
+      {
+        "id": "Paraíba",
+        "n": 1,
+        "centroid": [
+          -36.107,
+          -7.9
+        ]
+      },
+      {
+        "id": "Paraná",
+        "n": 4,
+        "centroid": [
+          -51.665,
+          -25.101
+        ]
+      },
+      {
+        "id": "Pernambuco",
+        "n": 0,
+        "centroid": [
+          -37.591,
+          -9.113
+        ]
+      },
+      {
+        "id": "Piauí",
+        "n": 0,
+        "centroid": [
+          -42.832,
+          -7.718
+        ]
+      },
+      {
+        "id": "Rio de Janeiro",
+        "n": 16,
+        "centroid": [
+          -42.4103,
+          -22.909
+        ]
+      },
+      {
+        "id": "Rio Grande do Norte",
+        "n": 0,
+        "centroid": [
+          -36.588,
+          -6.394
+        ]
+      },
+      {
+        "id": "Rio Grande do Sul",
+        "n": 9,
+        "centroid": [
+          -53.215,
+          -30.034
+        ]
+      },
+      {
+        "id": "Rondônia",
+        "n": 0,
+        "centroid": [
+          -63.315,
+          -11.226
+        ]
+      },
+      {
+        "id": "Roraima",
+        "n": 0,
+        "centroid": [
+          -61.443,
+          2.737
+        ]
+      },
+      {
+        "id": "Santa Catarina",
+        "n": 3,
+        "centroid": [
+          -49.575,
+          -27.998
+        ]
+      },
+      {
+        "id": "São Paulo",
+        "n": 12,
+        "centroid": [
+          -49.379,
+          -22.781
+        ]
+      },
+      {
+        "id": "Sergipe",
+        "n": 0,
+        "centroid": [
+          -37.449,
+          -11.27
+        ]
+      },
+      {
+        "id": "Tocantins",
+        "n": 0,
+        "centroid": [
+          -48.297,
+          -10.184
+        ]
+      },
+      {
+        "id": "DF",
+        "n": 1,
+        "centroid": [
+          -47.929,
+          -15.48
+        ]
+      }
+    ],
+    "panel_d_counts": [
+      {
+        "id": "Acre",
+        "n": 0,
+        "centroid": [
+          -70.812,
+          -9.189
+        ]
+      },
+      {
+        "id": "Alagoas",
+        "n": 0,
+        "centroid": [
+          -36.429,
+          -10.465
+        ]
+      },
+      {
+        "id": "Amapá",
+        "n": 0,
+        "centroid": [
+          -51.796,
+          1.413
+        ]
+      },
+      {
+        "id": "Amazonas",
+        "n": 0,
+        "centroid": [
+          -65.421,
+          -5.416
+        ]
+      },
+      {
+        "id": "Bahia",
+        "n": 0,
+        "centroid": [
+          -41.728,
+          -12.97
+        ]
+      },
+      {
+        "id": "Ceará",
+        "n": 3,
+        "centroid": [
+          -39.53,
+          -5.498
+        ]
+      },
+      {
+        "id": "Espírito Santo",
+        "n": 0,
+        "centroid": [
+          -40.276,
+          -19.883
+        ]
+      },
+      {
+        "id": "Goiás",
+        "n": 0,
+        "centroid": [
+          -49.706,
+          -16.827
+        ]
+      },
+      {
+        "id": "Maranhão",
+        "n": 0,
+        "centroid": [
+          -45.304,
+          -5.614
+        ]
+      },
+      {
+        "id": "Mato Grosso",
+        "n": 1,
+        "centroid": [
+          -55.541,
+          -13.681
+        ]
+      },
+      {
+        "id": "Mato Grosso do Sul",
+        "n": 0,
+        "centroid": [
+          -54.533,
+          -20.772
+        ]
+      },
+      {
+        "id": "Minas Gerais",
+        "n": 3,
+        "centroid": [
+          -44.598,
+          -19.412
+        ]
+      },
+      {
+        "id": "Pará",
+        "n": 0,
+        "centroid": [
+          -52.297,
+          -3.416
+        ]
+      },
+      {
+        "id": "Paraíba",
+        "n": 1,
+        "centroid": [
+          -36.107,
+          -7.9
+        ]
+      },
+      {
+        "id": "Paraná",
+        "n": 2,
+        "centroid": [
+          -51.665,
+          -25.101
+        ]
+      },
+      {
+        "id": "Pernambuco",
+        "n": 2,
+        "centroid": [
+          -37.591,
+          -9.113
+        ]
+      },
+      {
+        "id": "Piauí",
+        "n": 0,
+        "centroid": [
+          -42.832,
+          -7.718
+        ]
+      },
+      {
+        "id": "Rio de Janeiro",
+        "n": 4,
+        "centroid": [
+          -42.4103,
+          -22.909
+        ]
+      },
+      {
+        "id": "Rio Grande do Norte",
+        "n": 0,
+        "centroid": [
+          -36.588,
+          -6.394
+        ]
+      },
+      {
+        "id": "Rio Grande do Sul",
+        "n": 14,
+        "centroid": [
+          -53.215,
+          -30.034
+        ]
+      },
+      {
+        "id": "Rondônia",
+        "n": 0,
+        "centroid": [
+          -63.315,
+          -11.226
+        ]
+      },
+      {
+        "id": "Roraima",
+        "n": 0,
+        "centroid": [
+          -61.443,
+          2.737
+        ]
+      },
+      {
+        "id": "Santa Catarina",
+        "n": 5,
+        "centroid": [
+          -49.575,
+          -27.998
+        ]
+      },
+      {
+        "id": "São Paulo",
+        "n": 24,
+        "centroid": [
+          -49.379,
+          -22.781
+        ]
+      },
+      {
+        "id": "Sergipe",
+        "n": 0,
+        "centroid": [
+          -37.449,
+          -11.27
+        ]
+      },
+      {
+        "id": "Tocantins",
+        "n": 0,
+        "centroid": [
+          -48.297,
+          -10.184
+        ]
+      },
+      {
+        "id": "DF",
+        "n": 1,
+        "centroid": [
+          -47.929,
+          -15.48
+        ]
+      }
+    ]
+  },
+  "concat": [
+    {
+      "title": {
+        "text": "A. Registered Labs",
+        "anchor": "start",
+        "fontSize": 18,
+        "fontWeight": "bold",
+        "offset": 8
+      },
+      "width": 340,
+      "height": 255,
+      "data": {
+        "url": "https://raw.githubusercontent.com/fititnt/gis-dataset-brasil/master/uf/topojson/uf.json",
+        "format": {
+          "type": "topojson",
+          "feature": "uf"
+        }
+      },
+      "transform": [
+        {
+          "lookup": "properties.name",
+          "from": {
+            "data": {
+              "name": "panel_a_counts"
+            },
+            "key": "id",
+            "fields": [
+              "n",
+              "centroid"
+            ]
+          }
+        },
+        {
+          "calculate": "datum.centroid[0]",
+          "as": "longitude"
+        },
+        {
+          "calculate": "datum.centroid[1]",
+          "as": "latitude"
+        }
+      ],
+      "projection": {
+        "type": "mercator"
+      },
+      "layer": [
+        {
+          "mark": {
+            "type": "geoshape",
+            "stroke": "black",
+            "strokeWidth": 0.7
+          },
+          "encoding": {
+            "color": {
+              "field": "n",
+              "type": "quantitative",
+              "scale": {
+                "range": [
+                  "#F7FBFF",
+                  "#9ECAE1",
+                  "#6BAED6",
+                  "#4292C6",
+                  "#2171B5",
+                  "#08519C",
+                  "#08306B"
+                ],
+                "type": "threshold",
+                "domain": [
+                  1,
+                  3,
+                  5,
+                  10,
+                  15,
+                  20
+                ]
+              },
+              "legend": {
+                "title": "Count",
+                "titleAlign": "center",
+                "titleFontSize": 14,
+                "labelFontSize": 11,
+                "orient": "right"
+              }
+            },
+            "tooltip": [
+              {
+                "field": "properties.name",
+                "type": "nominal",
+                "title": "State"
+              },
+              {
+                "field": "n",
+                "type": "quantitative",
+                "title": "Count",
+                "format": "d"
+              }
+            ]
+          }
+        },
+        {
+          "mark": {
+            "type": "text",
+            "fontSize": 10,
+            "fontWeight": "bold",
+            "dy": -5
+          },
+          "encoding": {
+            "longitude": {
+              "field": "longitude",
+              "type": "quantitative"
+            },
+            "latitude": {
+              "field": "latitude",
+              "type": "quantitative"
+            },
+            "text": {
+              "field": "n",
+              "type": "quantitative",
+              "format": "d"
+            },
+            "color": {
+              "condition": [
+                {
+                  "test": "datum.n === 0",
+                  "value": "transparent"
+                },
+                {
+                  "test": "datum.n >= 10",
+                  "value": "white"
+                }
+              ],
+              "value": "black"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": {
+        "text": "B. Included Labs",
+        "anchor": "start",
+        "fontSize": 18,
+        "fontWeight": "bold",
+        "offset": 8
+      },
+      "width": 340,
+      "height": 255,
+      "data": {
+        "url": "https://raw.githubusercontent.com/fititnt/gis-dataset-brasil/master/uf/topojson/uf.json",
+        "format": {
+          "type": "topojson",
+          "feature": "uf"
+        }
+      },
+      "transform": [
+        {
+          "lookup": "properties.name",
+          "from": {
+            "data": {
+              "name": "panel_b_counts"
+            },
+            "key": "id",
+            "fields": [
+              "n",
+              "centroid"
+            ]
+          }
+        },
+        {
+          "calculate": "datum.centroid[0]",
+          "as": "longitude"
+        },
+        {
+          "calculate": "datum.centroid[1]",
+          "as": "latitude"
+        }
+      ],
+      "projection": {
+        "type": "mercator"
+      },
+      "layer": [
+        {
+          "mark": {
+            "type": "geoshape",
+            "stroke": "black",
+            "strokeWidth": 0.7
+          },
+          "encoding": {
+            "color": {
+              "field": "n",
+              "type": "quantitative",
+              "scale": {
+                "range": [
+                  "#F7FBFF",
+                  "#9ECAE1",
+                  "#6BAED6",
+                  "#4292C6",
+                  "#2171B5",
+                  "#08519C",
+                  "#08306B"
+                ],
+                "type": "threshold",
+                "domain": [
+                  1,
+                  3,
+                  5,
+                  10,
+                  15,
+                  20
+                ]
+              },
+              "legend": {
+                "title": "Count",
+                "titleAlign": "center",
+                "titleFontSize": 14,
+                "labelFontSize": 11,
+                "orient": "right"
+              }
+            },
+            "tooltip": [
+              {
+                "field": "properties.name",
+                "type": "nominal",
+                "title": "State"
+              },
+              {
+                "field": "n",
+                "type": "quantitative",
+                "title": "Count",
+                "format": "d"
+              }
+            ]
+          }
+        },
+        {
+          "mark": {
+            "type": "text",
+            "fontSize": 10,
+            "fontWeight": "bold",
+            "dy": -5
+          },
+          "encoding": {
+            "longitude": {
+              "field": "longitude",
+              "type": "quantitative"
+            },
+            "latitude": {
+              "field": "latitude",
+              "type": "quantitative"
+            },
+            "text": {
+              "field": "n",
+              "type": "quantitative",
+              "format": "d"
+            },
+            "color": {
+              "condition": [
+                {
+                  "test": "datum.n === 0",
+                  "value": "transparent"
+                },
+                {
+                  "test": "datum.n >= 10",
+                  "value": "white"
+                }
+              ],
+              "value": "black"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": {
+        "text": "C. Labs Contributing Experiments",
+        "anchor": "start",
+        "fontSize": 18,
+        "fontWeight": "bold",
+        "offset": 8
+      },
+      "width": 340,
+      "height": 255,
+      "data": {
+        "url": "https://raw.githubusercontent.com/fititnt/gis-dataset-brasil/master/uf/topojson/uf.json",
+        "format": {
+          "type": "topojson",
+          "feature": "uf"
+        }
+      },
+      "transform": [
+        {
+          "lookup": "properties.name",
+          "from": {
+            "data": {
+              "name": "panel_c_counts"
+            },
+            "key": "id",
+            "fields": [
+              "n",
+              "centroid"
+            ]
+          }
+        },
+        {
+          "calculate": "datum.centroid[0]",
+          "as": "longitude"
+        },
+        {
+          "calculate": "datum.centroid[1]",
+          "as": "latitude"
+        }
+      ],
+      "projection": {
+        "type": "mercator"
+      },
+      "layer": [
+        {
+          "mark": {
+            "type": "geoshape",
+            "stroke": "black",
+            "strokeWidth": 0.7
+          },
+          "encoding": {
+            "color": {
+              "field": "n",
+              "type": "quantitative",
+              "scale": {
+                "range": [
+                  "#F7FBFF",
+                  "#9ECAE1",
+                  "#6BAED6",
+                  "#4292C6",
+                  "#2171B5",
+                  "#08519C",
+                  "#08306B"
+                ],
+                "type": "threshold",
+                "domain": [
+                  1,
+                  3,
+                  5,
+                  10,
+                  15,
+                  20
+                ]
+              },
+              "legend": {
+                "title": "Count",
+                "titleAlign": "center",
+                "titleFontSize": 14,
+                "labelFontSize": 11,
+                "orient": "right"
+              }
+            },
+            "tooltip": [
+              {
+                "field": "properties.name",
+                "type": "nominal",
+                "title": "State"
+              },
+              {
+                "field": "n",
+                "type": "quantitative",
+                "title": "Count",
+                "format": "d"
+              }
+            ]
+          }
+        },
+        {
+          "mark": {
+            "type": "text",
+            "fontSize": 10,
+            "fontWeight": "bold",
+            "dy": -5
+          },
+          "encoding": {
+            "longitude": {
+              "field": "longitude",
+              "type": "quantitative"
+            },
+            "latitude": {
+              "field": "latitude",
+              "type": "quantitative"
+            },
+            "text": {
+              "field": "n",
+              "type": "quantitative",
+              "format": "d"
+            },
+            "color": {
+              "condition": [
+                {
+                  "test": "datum.n === 0",
+                  "value": "transparent"
+                },
+                {
+                  "test": "datum.n >= 10",
+                  "value": "white"
+                }
+              ],
+              "value": "black"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "title": {
+        "text": "D. Original Articles",
+        "anchor": "start",
+        "fontSize": 18,
+        "fontWeight": "bold",
+        "offset": 8
+      },
+      "width": 340,
+      "height": 255,
+      "data": {
+        "url": "https://raw.githubusercontent.com/fititnt/gis-dataset-brasil/master/uf/topojson/uf.json",
+        "format": {
+          "type": "topojson",
+          "feature": "uf"
+        }
+      },
+      "transform": [
+        {
+          "lookup": "properties.name",
+          "from": {
+            "data": {
+              "name": "panel_d_counts"
+            },
+            "key": "id",
+            "fields": [
+              "n",
+              "centroid"
+            ]
+          }
+        },
+        {
+          "calculate": "datum.centroid[0]",
+          "as": "longitude"
+        },
+        {
+          "calculate": "datum.centroid[1]",
+          "as": "latitude"
+        }
+      ],
+      "projection": {
+        "type": "mercator"
+      },
+      "layer": [
+        {
+          "mark": {
+            "type": "geoshape",
+            "stroke": "black",
+            "strokeWidth": 0.7
+          },
+          "encoding": {
+            "color": {
+              "field": "n",
+              "type": "quantitative",
+              "scale": {
+                "range": [
+                  "#F7FBFF",
+                  "#9ECAE1",
+                  "#6BAED6",
+                  "#4292C6",
+                  "#2171B5",
+                  "#08519C",
+                  "#08306B"
+                ],
+                "type": "threshold",
+                "domain": [
+                  1,
+                  3,
+                  5,
+                  10,
+                  15,
+                  20
+                ]
+              },
+              "legend": {
+                "title": "Count",
+                "titleAlign": "center",
+                "titleFontSize": 14,
+                "labelFontSize": 11,
+                "orient": "right"
+              }
+            },
+            "tooltip": [
+              {
+                "field": "properties.name",
+                "type": "nominal",
+                "title": "State"
+              },
+              {
+                "field": "n",
+                "type": "quantitative",
+                "title": "Count",
+                "format": "d"
+              }
+            ]
+          }
+        },
+        {
+          "mark": {
+            "type": "text",
+            "fontSize": 10,
+            "fontWeight": "bold",
+            "dy": -5
+          },
+          "encoding": {
+            "longitude": {
+              "field": "longitude",
+              "type": "quantitative"
+            },
+            "latitude": {
+              "field": "latitude",
+              "type": "quantitative"
+            },
+            "text": {
+              "field": "n",
+              "type": "quantitative",
+              "format": "d"
+            },
+            "color": {
+              "condition": [
+                {
+                  "test": "datum.n === 0",
+                  "value": "transparent"
+                },
+                {
+                  "test": "datum.n >= 10",
+                  "value": "white"
+                }
+              ],
+              "value": "black"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "columns": 2,
+  "spacing": 15,
+  "resolve": {
+    "scale": {
+      "color": "shared"
+    },
+    "legend": {
+      "color": "shared"
+    }
+  },
+  "config": {
+    "font": "Arial",
+    "view": {
+      "stroke": null
+    },
+    "concat": {
+      "spacing": 15
+    }
+  }
+}
