@@ -2050,6 +2050,625 @@ plot_cvs <- function(rep_df, orig_df, suffix, rep_summary_folder) {
   bri_ggsave(paste0(rep_summary_folder, "/CV plots/CV plot - combined", suffix, ".png"), plot = p, width = 8, height = 9)
 }
 
+# Original-study SD versus mean regression ---------------------------------
+
+plot_original_sd_mean_regression <- function(
+    data_path,
+    output_dir) {
+  if (!file.exists(data_path)) {
+    stop("Original-study summary file not found: ", data_path)
+  }
+
+  required_columns <- c(
+    "Prediction Markets ID",
+    "EXP",
+    "Selected Figure/Table",
+    "Original Article DOI",
+    "Data Processing",
+    "Error Type",
+    "SD Estimate",
+    "Control Mean",
+    "Control Error",
+    "Control SD",
+    "Reported Control Sample Size",
+    "Assumed Control Sample Size",
+    "Control Sample Size for DFs",
+    "Treated Mean",
+    "Treated Error",
+    "Treated SD",
+    "Reported Treated Sample Size",
+    "Assumed Treated Sample Size",
+    "Sample size (range for both groups)",
+    "Treated Sample Size for DFs"
+  )
+
+  original_data <- readr::read_tsv(data_path, show_col_types = FALSE)
+  missing_columns <- setdiff(required_columns, colnames(original_data))
+
+  if (length(missing_columns) > 0) {
+    stop(
+      "Original-study summary is missing required columns: ",
+      paste(missing_columns, collapse = ", ")
+    )
+  }
+
+  unexpected_error_types <- setdiff(
+    unique(stats::na.omit(original_data[["Error Type"]])),
+    c("SD", "SEM")
+  )
+
+  if (length(unexpected_error_types) > 0) {
+    stop(
+      "Unexpected original error-bar types: ",
+      paste(unexpected_error_types, collapse = ", ")
+    )
+  }
+
+  expected_sd_estimate_bases <- c(
+    "reported SD",
+    "reported SEM and N",
+    "reported SEM and range for N"
+  )
+  unexpected_sd_estimate_bases <- setdiff(
+    unique(stats::na.omit(original_data[["SD Estimate"]])),
+    expected_sd_estimate_bases
+  )
+
+  if (length(unexpected_sd_estimate_bases) > 0) {
+    stop(
+      "Unexpected SD estimate bases: ",
+      paste(unexpected_sd_estimate_bases, collapse = ", ")
+    )
+  }
+
+  if (nrow(original_data) != 60 || n_distinct(original_data$EXP) != 60) {
+    stop("Figure S10 expects exactly 60 unique source experiments")
+  }
+
+  expected_mtt_percentage_experiments <- c(
+    "MTT4",
+    "MTT13",
+    "MTT26",
+    "MTT33",
+    "MTT37",
+    "MTT42",
+    "MTT45",
+    "MTT60",
+    "MTT71",
+    "MTT83"
+  )
+  mtt_scale_audit <- original_data |>
+    filter(stringr::str_detect(EXP, "^MTT")) |>
+    mutate(
+      percentage_scale = (
+        .data[["Control Mean"]] > 10 &
+          .data[["Treated Mean"]] > 10
+      ),
+      ratio_or_other_scale = (
+        .data[["Control Mean"]] <= 10 &
+          .data[["Treated Mean"]] <= 10
+      )
+    )
+
+  if (any(!mtt_scale_audit$percentage_scale &
+          !mtt_scale_audit$ratio_or_other_scale)) {
+    stop(
+      "MTT unit classification is ambiguous because an experiment spans ",
+      "the percentage- and ratio-scale ranges"
+    )
+  }
+
+  mtt_percentage_experiments <- mtt_scale_audit |>
+    filter(percentage_scale) |>
+    pull(EXP)
+
+  if (!setequal(
+    mtt_percentage_experiments,
+    expected_mtt_percentage_experiments
+  )) {
+    stop(
+      "The percentage-scale MTT experiments no longer match the audited set"
+    )
+  }
+
+  expected_normalized_treated_experiments <- c(
+    "MTT86",
+    "MTT87",
+    "MTT96",
+    "PCR16",
+    "PCR69",
+    "PCR147",
+    "PCR175",
+    "PCR184"
+  )
+  normalized_zero_control_experiments <- original_data |>
+    filter(
+      is.finite(.data[["Control Mean"]]),
+      dplyr::near(.data[["Control Mean"]], 1),
+      is.finite(.data[["Control SD"]]),
+      .data[["Control SD"]] == 0
+    ) |>
+    pull(EXP)
+
+  if (!setequal(
+    normalized_zero_control_experiments,
+    expected_normalized_treated_experiments
+  )) {
+    stop(
+      "The normalized zero-SD control experiments no longer match the ",
+      "audited set"
+    )
+  }
+
+  sanitize_tsv_text <- function(value) {
+    value |>
+      stringr::str_replace_all("[\\r\\n\\t]+", " ") |>
+      stringr::str_squish()
+  }
+
+  make_arm_data <- function(arm) {
+    mean_column <- paste(arm, "Mean")
+    error_column <- paste(arm, "Error")
+    sd_column <- paste(arm, "SD")
+    reported_sample_size_column <- paste("Reported", arm, "Sample Size")
+    assumed_sample_size_column <- paste("Assumed", arm, "Sample Size")
+    sample_size_column <- paste(arm, "Sample Size for DFs")
+
+    original_data |>
+      transmute(
+        study_id = .data[["Prediction Markets ID"]],
+        EXP,
+        selected_figure_or_table = sanitize_tsv_text(
+          .data[["Selected Figure/Table"]]
+        ),
+        original_article_doi = .data[["Original Article DOI"]],
+        data_processing = sanitize_tsv_text(.data[["Data Processing"]]),
+        method = stringr::str_extract(EXP, "(EPM|MTT|PCR)"),
+        arm = .env$arm,
+        reported_error_type = .data[["Error Type"]],
+        original_reported_error = .data[[error_column]],
+        reported_sample_size = .data[[reported_sample_size_column]],
+        sample_size_range = sanitize_tsv_text(
+          .data[["Sample size (range for both groups)"]]
+        ),
+        assumed_sample_size = .data[[assumed_sample_size_column]],
+        sample_size_used = .data[[sample_size_column]],
+        sd_estimate_basis = .data[["SD Estimate"]],
+        original_mean = .data[[mean_column]],
+        original_sd = .data[[sd_column]]
+      )
+  }
+
+  arm_data <- bind_rows(
+    make_arm_data("Control"),
+    make_arm_data("Treated")
+  ) |>
+    mutate(
+      method = factor(method, levels = c("EPM", "MTT", "PCR")),
+      arm = factor(arm, levels = c("Control", "Treated")),
+      study_arm = case_when(
+        as.character(arm) == "Control" ~ "Control",
+        EXP %in% normalized_zero_control_experiments ~ "Treated (Normalized)",
+        TRUE ~ "Treated"
+      ),
+      study_arm = factor(
+        study_arm,
+        levels = c("Control", "Treated", "Treated (Normalized)")
+      ),
+      sd_provenance = case_when(
+        reported_error_type == "SD" &
+          sd_estimate_basis == "reported SD" ~ "SD",
+        reported_error_type == "SEM" &
+          sd_estimate_basis == "reported SEM and N" ~
+            "SEM (exact)",
+        reported_error_type == "SEM" &
+          sd_estimate_basis == "reported SEM and range for N" ~
+            "SEM (estimated)",
+        TRUE ~ NA_character_
+      ),
+      sd_provenance = factor(
+        sd_provenance,
+        levels = c(
+          "SD",
+          "SEM (exact)",
+          "SEM (estimated)"
+        )
+      ),
+      mtt_original_scale = case_when(
+        as.character(method) != "MTT" ~ "Not applicable",
+        EXP %in% mtt_percentage_experiments ~
+          "Percentage (converted to ratio)",
+        TRUE ~ "Ratio/other (unchanged)"
+      ),
+      scale_factor = if_else(
+        EXP %in% mtt_percentage_experiments,
+        0.01,
+        1
+      ),
+      analysis_reported_error = original_reported_error * scale_factor,
+      analysis_mean = original_mean * scale_factor,
+      analysis_sd = original_sd * scale_factor,
+      exclusion_reason = case_when(
+        is.na(analysis_mean) | !is.finite(analysis_mean) ~
+          "Missing or non-finite mean",
+        analysis_mean <= 0 ~ "Nonpositive mean cannot be log-transformed",
+        is.na(analysis_sd) | !is.finite(analysis_sd) ~
+          "Missing or non-finite SD",
+        analysis_sd <= 0 ~ "Nonpositive SD cannot be log-transformed",
+        TRUE ~ NA_character_
+      )
+    )
+
+  if (any(is.na(arm_data$method))) {
+    stop("Could not derive EPM, MTT, or PCR method for every experiment")
+  }
+
+  if (any(is.na(arm_data$sd_provenance))) {
+    stop("Could not derive SD provenance for every source arm")
+  }
+
+  if (
+    nrow(arm_data) != 120 ||
+      n_distinct(paste(arm_data$EXP, arm_data$arm)) != 120
+  ) {
+    stop("Figure S10 expects exactly 120 unique source arms")
+  }
+
+  included_data <- arm_data |>
+    filter(is.na(exclusion_reason)) |>
+    mutate(
+      log_mean = log(analysis_mean),
+      log_sd = log(analysis_sd)
+    )
+
+  excluded_data <- arm_data |>
+    filter(!is.na(exclusion_reason)) |>
+    select(
+      study_id,
+      EXP,
+      selected_figure_or_table,
+      original_article_doi,
+      data_processing,
+      method,
+      arm,
+      study_arm,
+      reported_error_type,
+      sd_provenance,
+      original_reported_error,
+      analysis_reported_error,
+      reported_sample_size,
+      sample_size_range,
+      assumed_sample_size,
+      sample_size_used,
+      sd_estimate_basis,
+      mtt_original_scale,
+      scale_factor,
+      original_mean,
+      original_sd,
+      analysis_mean,
+      analysis_sd,
+      exclusion_reason
+    )
+
+  normalized_zero_control <- (
+    as.character(excluded_data$arm) == "Control" &
+      is.finite(excluded_data$original_mean) &
+      dplyr::near(excluded_data$original_mean, 1) &
+      is.finite(excluded_data$original_sd) &
+      excluded_data$original_sd == 0
+  )
+
+  if (
+    nrow(included_data) != 112 ||
+      nrow(excluded_data) != 8 ||
+      !all(normalized_zero_control)
+  ) {
+    stop(
+      "Figure S10 expects 112 included arms and eight normalized ",
+      "zero-SD control exclusions"
+    )
+  }
+
+  expected_study_arm_counts <- c(
+    "Control" = 52,
+    "Treated" = 52,
+    "Treated (Normalized)" = 8
+  )
+  study_arm_counts <- table(included_data$study_arm)
+
+  if (!identical(
+    unname(as.integer(study_arm_counts)),
+    unname(as.integer(expected_study_arm_counts))
+  )) {
+    stop("The Figure S10 study-arm counts no longer match the audited data")
+  }
+
+  excluded_experiment_ids <- excluded_data |>
+    mutate(
+      experiment_number = stringr::str_extract(EXP, "[0-9]+") |>
+        as.integer()
+    ) |>
+    arrange(method, experiment_number) |>
+    distinct(EXP) |>
+    pull(EXP)
+
+  format_experiment_list <- function(experiment_ids) {
+    number_of_experiments <- length(experiment_ids)
+
+    if (number_of_experiments == 1) {
+      return(experiment_ids)
+    }
+
+    if (number_of_experiments == 2) {
+      return(paste(experiment_ids, collapse = " and "))
+    }
+
+    paste0(
+      paste(experiment_ids[-number_of_experiments], collapse = ", "),
+      ", and ",
+      experiment_ids[[number_of_experiments]]
+    )
+  }
+
+  figure_caption <- paste0(
+    "MTT percentage-scale means and SDs were divided by 100. ",
+    "\"Treated (Normalized)\" denotes treated arms whose normalized ",
+    "control had mean = 1 and SD = 0.\n",
+    "The corresponding controls from ",
+    format_experiment_list(excluded_experiment_ids),
+    " were omitted because ln(SD) is undefined."
+  )
+
+  panel_levels <- c("EPM", "MTT", "PCR")
+  panel_data <- included_data |>
+    mutate(
+      panel = factor(as.character(method), levels = panel_levels)
+    )
+
+  fit_panel <- function(panel_name) {
+    data <- panel_data |>
+      filter(as.character(panel) == panel_name)
+
+    if (nrow(data) < 3) {
+      stop("Not enough observations to fit panel: ", panel_name)
+    }
+
+    model <- stats::lm(log_sd ~ log_mean, data = data)
+    model_summary_object <- summary(model)
+    point_prediction <- suppressWarnings(
+      stats::predict(
+        model,
+        newdata = data,
+        interval = "prediction",
+        level = 0.95
+      )
+    )
+    residual_log_sd <- stats::residuals(model)
+    fitted_log_sd <- stats::fitted(model)
+    externally_studentized_residual <- stats::rstudent(model)
+
+    diagnostics <- data |>
+      mutate(
+        fitted_log_sd = unname(fitted_log_sd),
+        fitted_sd = exp(fitted_log_sd),
+        prediction_lower_log_sd = unname(point_prediction[, "lwr"]),
+        prediction_upper_log_sd = unname(point_prediction[, "upr"]),
+        prediction_lower_sd = exp(prediction_lower_log_sd),
+        prediction_upper_sd = exp(prediction_upper_log_sd),
+        residual_log_sd = unname(residual_log_sd),
+        externally_studentized_residual = unname(
+          externally_studentized_residual
+        ),
+        abs_externally_studentized_residual = abs(
+          externally_studentized_residual
+        ),
+        residual_rank_within_method = dplyr::min_rank(
+          dplyr::desc(abs_externally_studentized_residual)
+        ),
+        meets_abs_rstudent_2 = abs_externally_studentized_residual >= 2,
+        outside_95_prediction_interval = (
+          log_sd < prediction_lower_log_sd |
+            log_sd > prediction_upper_log_sd
+        ),
+        diagnostic_direction = case_when(
+          residual_log_sd < 0 ~ "Below fitted line",
+          residual_log_sd > 0 ~ "Above fitted line",
+          TRUE ~ "On fitted line"
+        ),
+        sd_to_fitted_ratio = analysis_sd / fitted_sd
+      )
+
+    prediction_grid <- tibble(
+      log_mean = seq(
+        min(data$log_mean),
+        max(data$log_mean),
+        length.out = 200
+      )
+    )
+    prediction_interval <- stats::predict(
+      model,
+      newdata = prediction_grid,
+      interval = "prediction",
+      level = 0.95
+    )
+    prediction_data <- prediction_grid |>
+      mutate(
+        panel = factor(panel_name, levels = panel_levels),
+        fitted_log_sd = unname(prediction_interval[, "fit"]),
+        prediction_lower_log_sd = unname(prediction_interval[, "lwr"]),
+        prediction_upper_log_sd = unname(prediction_interval[, "upr"])
+      )
+
+    model_summary <- tibble(
+      panel = factor(panel_name, levels = panel_levels),
+      intercept = unname(stats::coef(model)[[1]]),
+      slope = unname(stats::coef(model)[[2]]),
+      r_squared = unname(model_summary_object$r.squared),
+      n_points = nrow(data),
+      n_studies = n_distinct(data$EXP)
+    )
+
+    list(
+      model = model,
+      diagnostics = diagnostics,
+      prediction_data = prediction_data,
+      model_summary = model_summary
+    )
+  }
+
+  fit_results <- lapply(panel_levels, fit_panel)
+  names(fit_results) <- panel_levels
+
+  diagnostics <- purrr::map_dfr(fit_results, function(result) result$diagnostics) |>
+    arrange(panel, residual_rank_within_method, EXP, arm) |>
+    select(
+      panel,
+      residual_rank_within_method,
+      study_id,
+      EXP,
+      selected_figure_or_table,
+      original_article_doi,
+      data_processing,
+      method,
+      arm,
+      study_arm,
+      reported_error_type,
+      sd_provenance,
+      original_reported_error,
+      analysis_reported_error,
+      reported_sample_size,
+      sample_size_range,
+      assumed_sample_size,
+      sample_size_used,
+      sd_estimate_basis,
+      mtt_original_scale,
+      scale_factor,
+      original_mean,
+      original_sd,
+      analysis_mean,
+      analysis_sd,
+      log_mean,
+      log_sd,
+      fitted_log_sd,
+      fitted_sd,
+      prediction_lower_log_sd,
+      prediction_upper_log_sd,
+      prediction_lower_sd,
+      prediction_upper_sd,
+      residual_log_sd,
+      externally_studentized_residual,
+      abs_externally_studentized_residual,
+      meets_abs_rstudent_2,
+      outside_95_prediction_interval,
+      diagnostic_direction,
+      sd_to_fitted_ratio
+    )
+  prediction_data <- purrr::map_dfr(
+    fit_results,
+    function(result) result$prediction_data
+  )
+  model_summary <- purrr::map_dfr(
+    fit_results,
+    function(result) result$model_summary
+  )
+
+  p <- ggplot(diagnostics, aes(x = log_mean, y = log_sd)) +
+    geom_ribbon(
+      data = prediction_data,
+      aes(
+        x = log_mean,
+        ymin = prediction_lower_log_sd,
+        ymax = prediction_upper_log_sd
+      ),
+      inherit.aes = FALSE,
+      fill = bri_color[["light"]],
+      alpha = 0.45
+    ) +
+    geom_line(
+      data = prediction_data,
+      aes(x = log_mean, y = fitted_log_sd),
+      inherit.aes = FALSE,
+      color = bri_color[["dark"]],
+      linewidth = 0.8
+    ) +
+    geom_point(
+      aes(color = study_arm, shape = sd_provenance),
+      size = 2.5,
+      alpha = 0.8
+    ) +
+    facet_wrap(~panel, nrow = 1, scales = "free") +
+    scale_color_manual(
+      values = c(
+        "Control" = bri_color[["none"]],
+        "Treated" = bri_color[["main"]],
+        "Treated (Normalized)" = bri_color[["q3"]]
+      ),
+      drop = FALSE,
+      name = "Study arm"
+    ) +
+    scale_shape_manual(
+      values = c(
+        "SD" = 16,
+        "SEM (exact)" = 17,
+        "SEM (estimated)" = 2
+      ),
+      drop = FALSE,
+      name = "SD derivation"
+    ) +
+    guides(
+      color = guide_legend(order = 1, nrow = 1),
+      shape = guide_legend(order = 2, nrow = 1)
+    ) +
+    labs(
+      x = expression(ln(mean)),
+      y = expression(ln(SD))
+    ) +
+    bri_theme +
+    theme(
+      panel.grid.minor = element_blank(),
+      legend.position = "bottom",
+      legend.box = "vertical"
+    )
+
+  dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
+
+  writeLines(figure_caption, file.path(output_dir, "figure-caption.txt"))
+
+  figure_path <- file.path(
+    output_dir,
+    "original-study-log-sd-vs-log-mean.png"
+  )
+  bri_ggsave(
+    figure_path,
+    plot = p,
+    width = 12,
+    height = 6,
+    dpi = 300
+  )
+  readr::write_tsv(
+    model_summary,
+    file.path(output_dir, "model-summary.tsv")
+  )
+  readr::write_tsv(
+    diagnostics,
+    file.path(output_dir, "point-diagnostics.tsv")
+  )
+  readr::write_tsv(
+    excluded_data,
+    file.path(output_dir, "excluded-points.tsv")
+  )
+
+  invisible(list(
+    plot = p,
+    models = lapply(fit_results, function(result) result$model),
+    model_summary = model_summary,
+    diagnostics = diagnostics,
+    excluded_points = excluded_data,
+    figure_path = figure_path,
+    figure_caption = figure_caption
+  ))
+}
+
 # Plot histograms of post hoc power
 plot_power_histograms <- function(dfi) {
   dir.create(paste0("./output"))
@@ -2456,6 +3075,12 @@ plot_specification_curve <- function(results_path, include_method, suffix = "") 
 
 # Kappa -------------------------------------------------------------------
 
+format_log10_p_value_labels <- function(log10_breaks) {
+  labels <- scales::label_math(10^.x)(-log10_breaks)
+  labels[log10_breaks == 0] <- expression(1)
+  labels
+}
+
 plot_kappa_exp <- function(input_path, output_path) {
   # Import the data
   predictor_correlations_exp <- read_tsv(input_path) |>
@@ -2550,7 +3175,7 @@ plot_kappa_exp <- function(input_path, output_path) {
       na.value = bri_color[["none"]],
       breaks = kappa_breaks_exp,
       limits = kappa_limits_exp,
-      labels = scales::label_number(accuracy = 0.1)(kappa_breaks_exp)
+      labels = format_log10_p_value_labels(kappa_breaks_exp)
     ) +
     labs(x = "", y = "", title = "Agreement between criteria (experiment)", fill = "p-value") +
     scale_y_discrete(expand = c(0, 0)) +
@@ -2657,7 +3282,7 @@ plot_kappa_rep <- function(input_path, output_path) {
       na.value = bri_color[["none"]],
       breaks = kappa_breaks_rep,
       limits = kappa_limits_rep,
-      labels = scales::label_number(accuracy = 0.1)(kappa_breaks_rep)
+      labels = format_log10_p_value_labels(kappa_breaks_rep)
     ) +
     scale_y_discrete(expand = c(0, 0)) +
     scale_x_discrete(expand = c(0, 0)) +

@@ -45,6 +45,11 @@ source("analysis.R")
 results_path <- paste0(today())
 dir.create(paste0("./output/", results_path))
 
+plot_original_sd_mean_regression(
+  data_path = "./other-data/Original Experiments Statistical Summaries.tsv",
+  output_dir = file.path("./output", results_path, "original-error-bar-regression")
+)
+
 # Every column that starts with "analysis" will be considered an inclusion set column and must only have either cells marked "INCLUDE" or empty cells (not included).
 inclusion_sets <- read_excel("./other-data/inclusion_sets.xlsx", 1)
 
