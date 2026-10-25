@@ -599,7 +599,8 @@ plot_cortable_cluster <- function(FDATA, vars1, vars2, title, fn, show_label, ma
           "Same-sign significance (p<0.05)" = "Same sense significance",
           "≥50% replications significant" = "Voting (with ties)",
           "≥50% subjectively replicated" = "Subjective (with ties)",
-          "Subjectively replicated" = "Subjective"
+          "Subjectively replicated" = "Subjective",
+          "Log Ratio Effect Size" = "Replication Effect Size"
         ),
       col2 = col2 |>
         fct_recode(
@@ -624,7 +625,8 @@ plot_cortable_cluster <- function(FDATA, vars1, vars2, title, fn, show_label, ma
           "Same-sign significance (p<0.05)" = "Same sense significance",
           "≥50% replications significant" = "Voting (with ties)",
           "≥50% subjectively replicated" = "Subjective (with ties)",
-          "Subjectively replicated" = "Subjective"
+          "Subjectively replicated" = "Subjective",
+          "Log Ratio Effect Size" = "Replication Effect Size"
         ),
     )
 
@@ -730,7 +732,7 @@ plot_cortable_cluster <- function(FDATA, vars1, vars2, title, fn, show_label, ma
         col2,
         "t Value",
         "-log ES Ratio",
-        "Replication Effect Size",
+        "Log Ratio Effect Size",
         "SMD Effect Size",
         "Original in replication's 95% PI"
       )),
@@ -860,7 +862,7 @@ plot_cortable_cluster <- function(FDATA, vars1, vars2, title, fn, show_label, ma
         col2,
         "t Value",
         "-log ES Ratio",
-        "Replication Effect Size",
+        "Log Ratio Effect Size",
         "SMD Effect Size",
         "Original in replication's 95% PI"
       )),
