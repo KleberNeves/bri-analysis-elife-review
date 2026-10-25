@@ -67,6 +67,10 @@ D_TWO_SAMPLE_UNEQUAL = D |> filter(
 
 D = full_join(D, rbind(D_ONE_SAMPLE, D_TWO_SAMPLE_UNEQUAL), by = "EXP")
 
+# Keep both 95% power sample size estimates (SMD and log ratio) side by side
+D = D |>
+  relocate(`Estimated Sample Size for 95% power (Log Ratio)`, .after = `Estimated Sample Size for 95% power`)
+
 
 write_tsv(file = "./other-data/Original Experiments Statistical Summaries.tsv", D, quote = "all")
 
