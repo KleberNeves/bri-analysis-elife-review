@@ -3412,18 +3412,63 @@ doc <- doc |>
                )
 
 ### Specification curve range -----------------------------------------------------
-replication_rate_list <- read_tsv(paste0("output/", results_path, "/Replication Rate Aggregate - without Method.tsv"), show_col_types = FALSE) |> 
-  rename(repro_rate = Value) |> 
+# Uses the specifications plotted in Fig. 2 (saved by plot_specification_curve with include_method = F)
+replication_rate_list <- read_tsv(paste0("output/", results_path, "/specification-curve-data-without-method.tsv"), show_col_types = FALSE) |>
   pull(repro_rate)
+
+n_rows_aggregate <- read_tsv(paste0("output/", results_path, "/Replication Rate Aggregate - without Method.tsv"), show_col_types = FALSE) |>
+  nrow()
 
 doc <- doc |>
   body_add_par(run_linebreak()) |>
-  body_add(fpar(ftext("m) Specification curve range", prop = fp_text(bold = TRUE)))) |> 
+  body_add(fpar(ftext("m) Specification curve range", prop = fp_text(bold = TRUE)))) |>
   body_add_par(paste0(
+    "Number of analyses: ", length(replication_rate_list), " | ",
     "Minimum: ", min(replication_rate_list), " | ",
     "Maximum: ", max(replication_rate_list), "."
   )
+  ) |>
+  body_add_par(paste0(
+    "Based on the ", length(replication_rate_list), " analysis specifications plotted in Fig. 2 (specification-curve-without-method.png). ",
+    "Compared with the full aggregate table (Replication Rate Aggregate - without Method.tsv, ", n_rows_aggregate, " rows), ",
+    "the figure excludes the 'All experiments (BRI UNIT)' and single-replication ≥80% power inclusion sets, ",
+    "keeps only combined-method specifications (PCR scale and MTT pairing toggles) and only the metrics shown on the y-axis."
+  ))
+
+### Comparison with RP:CB ---------------------------------------------------
+
+# RP:CB rates for the 97 original positive effects with numerical results (effect level),
+# from Errington et al. (2021), eLife 10:e71601, doi:10.7554/eLife.71601
+rpcb_rates <- tribble(
+  ~Metric, ~rpcb_criterion, ~rpcb_successful, ~rpcb_n,
+  "REP_FEMA_SSS_Orig", "Direction and statistical significance", 42, 97,
+  "REP_REMA_in_Orig_CI", "Replication ES in original 95% CI", 42, 97,
+  "REP_Orig_in_REMA_PI", "Replication ES in original 95% PI", 56, 97,
+  "REP_Most_Criteria_WithTies", "Succeeded on more criteria than failed (5 criteria)", 39, 97
+)
+
+df_rpcb_comparison <- read_tsv(paste0("output/", results_path, "/primary t/Replication Rate Summary.tsv"), show_col_types = FALSE) |>
+  inner_join(rpcb_rates, by = "Metric") |>
+  arrange(match(Metric, rpcb_rates$Metric)) |>
+  transmute(
+    `BRI criterion` = MetricShortName,
+    BRI = format_frequency(successful_ALL_PCR_MTT, N_ALL_PCR_MTT),
+    `RP:CB criterion` = rpcb_criterion,
+    `RP:CB` = format_frequency(rpcb_successful, rpcb_n)
   )
+
+stopifnot(nrow(df_rpcb_comparison) == nrow(rpcb_rates))
+
+tbl_rpcb_comparison <- df_rpcb_comparison |>
+  flextable() |>
+  bold(part = "header") |>
+  add_name("Table - Replication rates in BRI (primary analysis) and RP:CB.") |>
+  set_table_properties(layout = "autofit")
+
+doc <- doc |>
+  body_add_par(run_linebreak()) |>
+  body_add(fpar(ftext("n) Replication rates compared with RP:CB (Errington et al., 2021)", prop = fp_text(bold = TRUE)))) |>
+  body_add_flextable(tbl_rpcb_comparison)
 
 ### Fleiss Kappa ------------------------------------------------------------
 

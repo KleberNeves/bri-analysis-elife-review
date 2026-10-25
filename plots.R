@@ -3065,6 +3065,9 @@ plot_specification_curve <- function(results_path, include_method, suffix = "") 
     ncol = 1, nrow = 2, rel_heights = c(1, 1.5, 1.5)
   )
 
+  # Save the exact specifications plotted, so text-cited numbers match the figure
+  write_tsv(AGGDATA_USED, paste0("output/", results_path, "/specification-curve-data", suffix, ".tsv"))
+
   w <- 18
   if (!include_method) w <- 9
   ggsave(paste0("output/", results_path, "/specification-curve", suffix, ".png"),
