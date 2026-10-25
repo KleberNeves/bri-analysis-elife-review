@@ -410,20 +410,12 @@ for (table in table_names_t) {
     if (table == "tbl_by_method_only_80_power_a_posteriori_T_t") {
       save_tbl(
         list(get(table)),
-        paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S8.docx")
-      )
-      cat("\n### Table S8 generated! ###\n")
-    }
-
-    if (table == "tbl_by_method_all_exps_lab_units_t") {
-      save_tbl(
-        list(get(table)),
         paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S9.docx")
       )
       cat("\n### Table S9 generated! ###\n")
     }
 
-    if (table == "tbl_by_method_included_by_lab_t") {
+    if (table == "tbl_by_method_all_exps_lab_units_t") {
       save_tbl(
         list(get(table)),
         paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S10.docx")
@@ -431,7 +423,7 @@ for (table in table_names_t) {
       cat("\n### Table S10 generated! ###\n")
     }
 
-    if (table == "tbl_by_method_at_least_2_reps_t") {
+    if (table == "tbl_by_method_included_by_lab_t") {
       save_tbl(
         list(get(table)),
         paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S11.docx")
@@ -439,12 +431,20 @@ for (table in table_names_t) {
       cat("\n### Table S11 generated! ###\n")
     }
 
-    if (table == "tbl_by_method_only_3_reps_t") {
+    if (table == "tbl_by_method_at_least_2_reps_t") {
       save_tbl(
         list(get(table)),
         paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S12.docx")
       )
       cat("\n### Table S12 generated! ###\n")
+    }
+
+    if (table == "tbl_by_method_only_3_reps_t") {
+      save_tbl(
+        list(get(table)),
+        paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S13.docx")
+      )
+      cat("\n### Table S13 generated! ###\n")
     }
   }
 }
@@ -483,9 +483,9 @@ for (table in table_names_z) {
     if (table == "tbl_by_method_primary_z") {
       save_tbl(
         list(get(table)),
-        paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S13.docx")
+        paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S14.docx")
       )
-      cat("\n### Table S13 generated! ###\n")
+      cat("\n### Table S14 generated! ###\n")
     }
   }
 }
@@ -524,9 +524,9 @@ for (table in table_names_knha) {
     if (table == "tbl_by_method_primary_knha") {
       save_tbl(
         list(get(table)),
-        paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S15.docx")
+        paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S16.docx")
       )
-      cat("\n### Table S15 generated! ###\n")
+      cat("\n### Table S16 generated! ###\n")
     }
   }
 }
@@ -564,9 +564,9 @@ for (table in table_names_bigexp) {
     if (table == "tbl_by_method_primary_bigexp") {
       save_tbl(
         list(get(table)),
-        paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S17.docx")
+        paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S18.docx")
       )
-      cat("\n### Table S17 generated! ###\n")
+      cat("\n### Table S18 generated! ###\n")
     }
 
 
@@ -1877,6 +1877,77 @@ cat("\n### Table S3 generated! ###\n")
 
 ## Table S4 ----------------------------------------------------------------
 
+# Original author responses to contact for protocol information and data
+
+df_original_authors <- read_excel("other-data/Original_Author_Data.xlsx") |>
+  clean_names() |>
+  mutate(method = str_extract(experimento, "EPM|PCR|MTT"))
+
+format_frequency <- function(x, n) {
+  paste0(x, "/", n, " (", round(100 * x / n), "%)")
+}
+
+tbl_s4 <- bind_rows(
+  df_original_authors,
+  df_original_authors |> mutate(method = "Total")
+) |>
+  mutate(method = factor(method, levels = c("MTT", "PCR", "EPM", "Total"))) |>
+  group_by(method) |>
+  summarise(
+    n = n(),
+    complete = sum(preenchimento == 3, na.rm = T),
+    partial = sum(preenchimento == 2, na.rm = T),
+    no_information = sum(preenchimento == 1, na.rm = T),
+    no_response = sum(preenchimento == 0, na.rm = T),
+    days_to_respond = paste0(
+      median(intervalo, na.rm = T), " (",
+      min(intervalo, na.rm = T), "-",
+      max(intervalo, na.rm = T), ")"
+    ),
+    corresponding_author = sum(autor_resposta == 1, na.rm = T),
+    raw_data = sum(dados == 1, na.rm = T)
+  ) |>
+  mutate(across(
+    c(complete, partial, no_information, no_response, corresponding_author, raw_data),
+    ~ format_frequency(., n)
+  )) |>
+  select(
+    Method = method,
+    `Complete response` = complete,
+    `Partial response` = partial,
+    `No information` = no_information,
+    `No response` = no_response,
+    `Days to respond` = days_to_respond,
+    `Corresponding author response` = corresponding_author,
+    `Raw data` = raw_data
+  )
+
+tbl_s4 <- tbl_s4 |>
+  flextable() |>
+  bold(part = "header") |>
+  bold(i = 4) |>
+  hline(i = 3) |>
+  align(align = "center", part = "all") |>
+  add_footer_lines(value = as_paragraph(
+    as_b("Table S4. Original author responses to contact for protocol information and data"),
+    ". Authors were contacted in 3 steps: one aimed at the corresponding author, one including the first/last author and one including all authors (see ",
+    hyperlink_text("https://osf.io/3dn4x", url = "https://osf.io/3dn4x"),
+    "). Table shows the frequency of different categories of response to the protocol detail form (first 4 columns), including authors who filled in the complete form, partially filled it, responded to contact but provided no information or did not respond. Complete forms do not mean that every protocol detail asked for was provided, only that authors filled the whole form (e.g. protocol information may have still have been recorded as not available). Additional columns include time to response after contact (median/range), frequency of corresponding authors who responded and frequency of original data sharing."
+  )) |>
+  align(align = "justify", part = "footer") |>
+  set_table_properties(layout = "autofit")
+
+### Saving ----
+save_tbl(
+  list(tbl_s4),
+  paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S4.docx")
+)
+
+cat("\n### Table S4 generated! ###\n")
+
+
+## Table S5 ----------------------------------------------------------------
+
 # From inclusions sets
 
 df_inclusion_sets <- read_excel("other-data/inclusion_sets.xlsx")
@@ -1934,7 +2005,7 @@ validated_rep_total <- df_inclusion_sets |>
     values_from = "n()"
   )
 
-tbl_s4 <- df_inclusion_sets |>
+tbl_s5 <- df_inclusion_sets |>
   group_by(
     EXP
   ) |>
@@ -2017,7 +2088,7 @@ tbl_s4 <- df_inclusion_sets |>
       mutate(across(everything(), as.character))
   )
 
-tbl_s4 <- rbind(
+tbl_s5 <- rbind(
   tibble(
     category = "All replications",
     `3` = "",
@@ -2034,10 +2105,10 @@ tbl_s4 <- rbind(
     `0` = "0",
     Total = "Total"
   ),
-  tbl_s4
+  tbl_s5
 )
 
-tbl_s4 <- tbl_s4 |>
+tbl_s5 <- tbl_s5 |>
   flextable() |>
   hline(i = 1:2) |>
   hline(i = 6:7) |>
@@ -2051,13 +2122,13 @@ tbl_s4 <- tbl_s4 |>
 
 ### Saving ----
 save_tbl(
-  list(tbl_s4),
-  paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S4.docx")
+  list(tbl_s5),
+  paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S5.docx")
 )
 
-cat("\n### Table S4 generated! ###\n")
+cat("\n### Table S5 generated! ###\n")
 
-## Table S5 ----------------------------------------------------------------
+## Table S6 ----------------------------------------------------------------
 
 df_experiments_numbers_overview_wide <- read_tsv(paste0("output/", results_path, "/Experiment Numbers Overview - wide.tsv"), show_col_types = FALSE)
 
@@ -2082,7 +2153,7 @@ form1_val <- full_join(form1, inclusion_sets_short, by = c("LAB", "EXP")) |>
 
 form1_val
 
-# Build Table S5 data directly from inclusion_sets to avoid category mismatches
+# Build Table S6 data directly from inclusion_sets to avoid category mismatches
 # Use inclusion_sets as the authoritative source for validation decisions
 
 # Get experiment counts per validation category (only Done/BRI experiments)
@@ -2153,7 +2224,7 @@ df_experiments_numbers_overview_wide_join <- df_s5_data |>
   rename(`Validation decision` = validation_decision, `# of cases` = n)
 
 
-tbl_s5 <- df_experiments_numbers_overview_wide_join |>
+tbl_s6 <- df_experiments_numbers_overview_wide_join |>
   flextable() |>
   add_footer_lines("Table shows numbers for the different decisions reached at the validation process, as well as the rate of agreement of labs with each of them and a summary description of each category. For more information on the validation process, see https://osf.io/e3fjg.") |>
   add_name("Table - Agreement with validation decisions.") |>
@@ -2161,13 +2232,13 @@ tbl_s5 <- df_experiments_numbers_overview_wide_join |>
 
 ### Saving ----
 save_tbl(
-  list(tbl_s5),
-  paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S5.docx")
+  list(tbl_s6),
+  paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S6.docx")
 )
 
-cat("\n### Table S5 generated! ###\n")
+cat("\n### Table S6 generated! ###\n")
 
-## Table S7 -----------------------------------------------------
+## Table S8 -----------------------------------------------------
 df_final_sub_avaliation <- read_excel("other-data/self-assessment/Avaliacao_subjetiva_final.xlsx", sheet = 4) |>
   clean_names() |>
   select(replicou, categoria1, categoria2, categoria3) |>
@@ -2232,7 +2303,7 @@ n_unsuccessful <- df_final_sub_avaliation |>
   filter(replicou == "No") |>
   nrow()
 
-tbl_s7 <- tibble(
+tbl_s8 <- tibble(
   Category = paste0("Successful Replications (n = ", n_successful, ")"),
   `N (%)` = NA
 ) |>
@@ -2284,15 +2355,15 @@ tbl_s7 <- tibble(
 
 ### Saving ----
 save_tbl(
-  list(tbl_s7),
-  paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S7.docx")
+  list(tbl_s8),
+  paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S8.docx")
 )
 
-cat("\n### Table S7 generated! ###\n")
+cat("\n### Table S8 generated! ###\n")
 
 
-## Table S14 -----------------------------------------------------
-tbl_s14 <- df_by_experiment |>
+## Table S15 -----------------------------------------------------
+tbl_s15 <- df_by_experiment |>
   filter(Method == "ALL_PCR_MTT") |>
   filter(MA_Dist == "z") |>
   mutate(Value_Denominator = paste0(round(successful), "/", N, " (", Value, ")")) |>
@@ -2333,8 +2404,8 @@ tbl_s14 <- df_by_experiment |>
   ) |>
   slice(1:7, 8, 9, 10)
 
-ordered_cols_tbl_s14 <- tibble(
-  colname = colnames(tbl_s14),
+ordered_cols_tbl_s15 <- tibble(
+  colname = colnames(tbl_s15),
   priority = case_when(
     str_starts(colname, "MetricShortName") ~ 1,
     str_starts(colname, "primary") ~ 2,
@@ -2349,8 +2420,8 @@ ordered_cols_tbl_s14 <- tibble(
   arrange(priority) |>
   pull(colname)
 
-tbl_s14 <- tbl_s14 |>
-  select(any_of(ordered_cols_tbl_s14)) |>
+tbl_s15 <- tbl_s15 |>
+  select(any_of(ordered_cols_tbl_s15)) |>
   dplyr::rename(any_of(c(
     `Primary` = "primary_ALL_PCR_MTT",
     `Lab's choice` = "included_by_lab_ALL_PCR_MTT",
@@ -2360,30 +2431,30 @@ tbl_s14 <- tbl_s14 |>
     `≥80% power` = "only_80_power_a_posteriori_Z_ALL_PCR_MTT"
   )))
 
-footer_text_tbl_s14 <- "Replication rates for the primary and secondary analyses. Results are the same as in Table 2, but using a z distribution for statistical tests and prediction intervals derived from meta-analyses (as the distribution was not specified in the primary analysis). Same-sign significance is based on a fixed meta-analysis estimate, while effect size comparisons are based on random-effects meta-analysis. Subsets for secondary analyses include all experiments judged valid by the replicating lab (Lab’s Choice), all concluded experiments (using the lab unit as defined by the replicating lab), only experiments with at least 2 and 3 copies, and only experiments with ≥ 80% a posteriori power (using a z distribution, which leads to a different subset than that included in Table 2 and Table S8. PI, prediction interval, CI, confidence interval. For more information on replication criteria, see https://osf.io/9rnuj."
+footer_text_tbl_s15 <- "Replication rates for the primary and secondary analyses. Results are the same as in Table 2, but using a z distribution for statistical tests and prediction intervals derived from meta-analyses (as the distribution was not specified in the primary analysis). Same-sign significance is based on a fixed meta-analysis estimate, while effect size comparisons are based on random-effects meta-analysis. Subsets for secondary analyses include all experiments judged valid by the replicating lab (Lab’s Choice), all concluded experiments (using the lab unit as defined by the replicating lab), only experiments with at least 2 and 3 copies, and only experiments with ≥ 80% a posteriori power (using a z distribution, which leads to a different subset than that included in Table 2 and Table S9. PI, prediction interval, CI, confidence interval. For more information on replication criteria, see https://osf.io/9rnuj."
 
-tbl_s14 <- tbl_s14 |>
+tbl_s15 <- tbl_s15 |>
   slice(-1) |>
   flextable() |>
   bold(j = 2) |>
   bold(i = 6) |>
   hline(i = 5:6) |>
   set_header_labels(MetricShortName = "By experiment") |>
-  add_footer_lines(value = as_paragraph(footer_text_tbl_s14)) |>
-  add_header_lines(values = paste0("Table S14 - Replication rates for different analysis sets using the z distribution")) |>
+  add_footer_lines(value = as_paragraph(footer_text_tbl_s15)) |>
+  add_header_lines(values = paste0("Table S15 - Replication rates for different analysis sets using the z distribution")) |>
   bold(i = 2, part = "header") |>
   set_table_properties(layout = "autofit")
 
 ### Saving -----
 
 save_tbl(
-  tbl_s14,
-  paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S14.docx")
+  tbl_s15,
+  paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S15.docx")
 )
-cat("\n### Table S14 generated! ###\n")
+cat("\n### Table S15 generated! ###\n")
 
-## Table S16 -----------------------------------------------------
-tbl_s16 <- df_by_experiment |>
+## Table S17 -----------------------------------------------------
+tbl_s17 <- df_by_experiment |>
   filter(Method == "ALL_PCR_MTT") |>
   filter(MA_Dist == "knha") |>
   mutate(Value_Denominator = paste0(round(successful), "/", N, " (", Value, ")")) |>
@@ -2424,8 +2495,8 @@ tbl_s16 <- df_by_experiment |>
   ) |>
   slice(1:7, 8, 9, 10)
 
-ordered_cols_tbl_s16 <- tibble(
-  colname = colnames(tbl_s16),
+ordered_cols_tbl_s17 <- tibble(
+  colname = colnames(tbl_s17),
   priority = case_when(
     str_starts(colname, "MetricShortName") ~ 1,
     str_starts(colname, "primary") ~ 2,
@@ -2440,8 +2511,8 @@ ordered_cols_tbl_s16 <- tibble(
   arrange(priority) |>
   pull(colname)
 
-tbl_s16 <- tbl_s16 |>
-  select(any_of(ordered_cols_tbl_s16)) |>
+tbl_s17 <- tbl_s17 |>
+  select(any_of(ordered_cols_tbl_s17)) |>
   dplyr::rename(any_of(c(
     `Primary` = "primary_ALL_PCR_MTT",
     `Lab's choice` = "included_by_lab_ALL_PCR_MTT",
@@ -2451,29 +2522,29 @@ tbl_s16 <- tbl_s16 |>
     `≥80% power` = "only_80_power_a_posteriori_KNHA_ALL_PCR_MTT"
   )))
 
-footer_text_tbl_s16 <- "Replication rates for the primary and secondary analyses. Results are the same as in Table 2, but using a knha distribution for statistical tests and prediction intervals derived from meta-analyses (as the distribution was not specified in the primary analysis). Same-sign significance is based on a fixed meta-analysis estimate, while effect size comparisons are based on random-effects meta-analysis. Subsets for secondary analyses include all experiments judged valid by the replicating lab (Lab’s Choice), all concluded experiments (using the lab unit as defined by the replicating lab), only experiments with at least 2 and 3 copies, and only experiments with ≥ 80% a posteriori power (using a z distribution, which leads to a different subset than that included in Table 2 and Table S8. PI, prediction interval, CI, confidence interval. For more information on replication criteria, see https://osf.io/9rnuj."
+footer_text_tbl_s17 <- "Replication rates for the primary and secondary analyses. Results are the same as in Table 2, but using a knha distribution for statistical tests and prediction intervals derived from meta-analyses (as the distribution was not specified in the primary analysis). Same-sign significance is based on a fixed meta-analysis estimate, while effect size comparisons are based on random-effects meta-analysis. Subsets for secondary analyses include all experiments judged valid by the replicating lab (Lab’s Choice), all concluded experiments (using the lab unit as defined by the replicating lab), only experiments with at least 2 and 3 copies, and only experiments with ≥ 80% a posteriori power (using a z distribution, which leads to a different subset than that included in Table 2 and Table S9. PI, prediction interval, CI, confidence interval. For more information on replication criteria, see https://osf.io/9rnuj."
 
-tbl_s16 <- tbl_s16 |>
+tbl_s17 <- tbl_s17 |>
   slice(-1) |>
   flextable() |>
   bold(j = 2) |>
   bold(i = 6) |>
   hline(i = 5:6) |>
   set_header_labels(MetricShortName = "By experiment") |>
-  add_footer_lines(value = as_paragraph(footer_text_tbl_s16)) |>
-  add_header_lines(values = paste0("Table S16 - Replication rates for different analysis sets using the knha distribution")) |>
+  add_footer_lines(value = as_paragraph(footer_text_tbl_s17)) |>
+  add_header_lines(values = paste0("Table S17 - Replication rates for different analysis sets using the knha distribution")) |>
   bold(i = 2, part = "header") |>
   set_table_properties(layout = "autofit")
 
 ### Saving -----
 
 save_tbl(
-  tbl_s16,
-  paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S16.docx")
+  tbl_s17,
+  paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S17.docx")
 )
-cat("\n### Table S16 generated! ###\n")
+cat("\n### Table S17 generated! ###\n")
 
-## Table S18 (bigexp equivalent of Table 2) -----------------------------------------------------
+## Table S19 (bigexp equivalent of Table 2) -----------------------------------------------------
 # Build experiment-level data from bigexp
 tbl_s18_exp <- df_by_experiment |>
   filter(Method == "ALL_PCR_MTT") |>
@@ -2554,7 +2625,7 @@ tbl_s18_rep <- tbl_s18_rep |>
   select(-order)
 
 # Combine experiment and replication level data
-tbl_s18 <- tbl_s18_exp |>
+tbl_s19 <- tbl_s18_exp |>
   add_row(
     data.frame(MetricShortName = "By experiment"),
     .before = 0
@@ -2581,8 +2652,8 @@ tbl_s18 <- tbl_s18_exp |>
   )
 
 # Order columns - keep only bigexp power column
-ordered_cols_tbl_s18 <- tibble(
-  colname = colnames(tbl_s18),
+ordered_cols_tbl_s19 <- tibble(
+  colname = colnames(tbl_s19),
   priority = case_when(
     str_starts(colname, "MetricShortName") ~ 1,
     str_starts(colname, "primary") ~ 2,
@@ -2599,55 +2670,55 @@ ordered_cols_tbl_s18 <- tibble(
   arrange(priority) |>
   pull(colname)
 
-tbl_s18 <- tbl_s18 |>
-  select(all_of(ordered_cols_tbl_s18))
+tbl_s19 <- tbl_s19 |>
+  select(all_of(ordered_cols_tbl_s19))
 
 # Rename columns to human-readable names (only if they exist)
-if ("primary_ALL_PCR_MTT" %in% colnames(tbl_s18)) {
-  tbl_s18 <- tbl_s18 |> dplyr::rename(`Primary` = primary_ALL_PCR_MTT)
+if ("primary_ALL_PCR_MTT" %in% colnames(tbl_s19)) {
+  tbl_s19 <- tbl_s19 |> dplyr::rename(`Primary` = primary_ALL_PCR_MTT)
 }
-if ("included_by_lab_ALL_PCR_MTT" %in% colnames(tbl_s18)) {
-  tbl_s18 <- tbl_s18 |> dplyr::rename(`Lab's choice` = included_by_lab_ALL_PCR_MTT)
+if ("included_by_lab_ALL_PCR_MTT" %in% colnames(tbl_s19)) {
+  tbl_s19 <- tbl_s19 |> dplyr::rename(`Lab's choice` = included_by_lab_ALL_PCR_MTT)
 }
-if ("all_exps_lab_units_ALL_PCR_MTT" %in% colnames(tbl_s18)) {
-  tbl_s18 <- tbl_s18 |> dplyr::rename(`All Exps` = all_exps_lab_units_ALL_PCR_MTT)
+if ("all_exps_lab_units_ALL_PCR_MTT" %in% colnames(tbl_s19)) {
+  tbl_s19 <- tbl_s19 |> dplyr::rename(`All Exps` = all_exps_lab_units_ALL_PCR_MTT)
 }
-if ("at_least_2_reps_ALL_PCR_MTT" %in% colnames(tbl_s18)) {
-  tbl_s18 <- tbl_s18 |> dplyr::rename(`≥ 2 copies` = at_least_2_reps_ALL_PCR_MTT)
+if ("at_least_2_reps_ALL_PCR_MTT" %in% colnames(tbl_s19)) {
+  tbl_s19 <- tbl_s19 |> dplyr::rename(`≥ 2 copies` = at_least_2_reps_ALL_PCR_MTT)
 }
-if ("only_3_reps_ALL_PCR_MTT" %in% colnames(tbl_s18)) {
-  tbl_s18 <- tbl_s18 |> dplyr::rename(`3 copies` = only_3_reps_ALL_PCR_MTT)
+if ("only_3_reps_ALL_PCR_MTT" %in% colnames(tbl_s19)) {
+  tbl_s19 <- tbl_s19 |> dplyr::rename(`3 copies` = only_3_reps_ALL_PCR_MTT)
 }
 # Rename bigexp power column with shorter title (lowercase bigexp)
-if ("only_80_power_a_posteriori_bigexp_ALL_PCR_MTT" %in% colnames(tbl_s18)) {
-  tbl_s18 <- tbl_s18 |> dplyr::rename(`>80% power` = only_80_power_a_posteriori_bigexp_ALL_PCR_MTT)
+if ("only_80_power_a_posteriori_bigexp_ALL_PCR_MTT" %in% colnames(tbl_s19)) {
+  tbl_s19 <- tbl_s19 |> dplyr::rename(`>80% power` = only_80_power_a_posteriori_bigexp_ALL_PCR_MTT)
 }
 
-footer_text_tbl_s18 <- "Replication rates for the primary and secondary analyses using the bigexp distribution (experiment-level analysis). Effect size comparisons are based on random-effects meta-analysis, while same-sign significance is based on a fixed meta-analysis estimate. Metrics marked 'NA' are not available in the bigexp analysis. Replication-level metrics use values from the t distribution analysis (Table 2) for commensurability. Subsets for secondary analyses include all experiments judged valid by the replicating lab (Lab's Choice), all concluded experiments (All Exps), both using the experimental unit as defined by the lab, and only experiments with at least 2 and 3 replications. PI, prediction interval; CI, confidence interval. For more information on replication criteria, see https://osf.io/9rnuj."
+footer_text_tbl_s19 <- "Replication rates for the primary and secondary analyses using the bigexp distribution (experiment-level analysis). Effect size comparisons are based on random-effects meta-analysis, while same-sign significance is based on a fixed meta-analysis estimate. Metrics marked 'NA' are not available in the bigexp analysis. Replication-level metrics use values from the t distribution analysis (Table 2) for commensurability. Subsets for secondary analyses include all experiments judged valid by the replicating lab (Lab's Choice), all concluded experiments (All Exps), both using the experimental unit as defined by the lab, and only experiments with at least 2 and 3 replications. PI, prediction interval; CI, confidence interval. For more information on replication criteria, see https://osf.io/9rnuj."
 
-tbl_s18 <- tbl_s18 |>
+tbl_s19 <- tbl_s19 |>
   slice(-1) |>
   flextable() |>
   bold(j = 2) |>
   bold(i = 6) |>
   hline(i = 5:6) |>
   set_header_labels(MetricShortName = "By experiment") |>
-  add_footer_lines(value = as_paragraph(footer_text_tbl_s18)) |>
-  add_header_lines(values = paste0("Table S18 - Replication rates for different analysis sets using the bigexp distribution")) |>
+  add_footer_lines(value = as_paragraph(footer_text_tbl_s19)) |>
+  add_header_lines(values = paste0("Table S19 - Replication rates for different analysis sets using the bigexp distribution")) |>
   bold(i = 2, part = "header") |>
   set_table_properties(layout = "autofit")
 
 ### Saving -----
 
 save_tbl(
-  tbl_s18,
-  paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S18.docx")
+  tbl_s19,
+  paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S19.docx")
 )
-cat("\n### Table S18 generated! ###\n")
+cat("\n### Table S19 generated! ###\n")
 
 
-## Table S20 -----------------------------------------------------------------
-tbl_s20 <- df_by_experiment |>
+## Table S21 -----------------------------------------------------------------
+tbl_s21 <- df_by_experiment |>
   filter(Method == "PCR" | Method == "ALTPCR") |>
   filter(MA_Dist == "t") |>
   filter(Inclusion_Set == "all_exps_lab_units" | Inclusion_Set == "primary") |>
@@ -2690,8 +2761,8 @@ tbl_s20 <- df_by_experiment |>
   ) |>
   slice(1:7, 8, 9, 10)
 
-ordered_cols_tbl_s20 <- tibble(
-  colname = colnames(tbl_s20),
+ordered_cols_tbl_s21 <- tibble(
+  colname = colnames(tbl_s21),
   priority = case_when(
     str_starts(colname, "MetricShortName") ~ 1,
     str_starts(colname, "primary") ~ 2,
@@ -2702,8 +2773,8 @@ ordered_cols_tbl_s20 <- tibble(
   arrange(priority) |>
   pull(colname)
 
-tbl_s20 <- tbl_s20 |>
-  select(any_of(ordered_cols_tbl_s20)) |>
+tbl_s21 <- tbl_s21 |>
+  select(any_of(ordered_cols_tbl_s21)) |>
   dplyr::rename(any_of(c(
     `Primary (Log values)` = "primary_PCR_t",
     `Primary (Linear values)` = "primary_ALTPCR_t",
@@ -2711,29 +2782,29 @@ tbl_s20 <- tbl_s20 |>
     `All experiments (Linear values)` = "all_exps_lab_units_ALTPCR_t"
   )))
 
-footer_text_tbl_s20 <- "Log values columns show results of analysis aggregating ΔCt values for real-time PCR or relative expression in log2 scale for conventional PCR, as in the primary analysis. Linear values columns show results aggregating linearized values (usually 2-ΔΔCt) for real-time PCR and relative expression in linear scale for conventional PCR, as originally planned in the protocols. Same-sign significance is based on a fixed meta-analysis estimate, while effect size comparisons are based on random-effects meta-analysis. All statistical tests use the t distribution. PI, prediction interval, CI, confidence interval. For more information on replication criteria, see the registered replication protocol at https://osf.io/9rnuj."
+footer_text_tbl_s21 <- "Log values columns show results of analysis aggregating ΔCt values for real-time PCR or relative expression in log2 scale for conventional PCR, as in the primary analysis. Linear values columns show results aggregating linearized values (usually 2-ΔΔCt) for real-time PCR and relative expression in linear scale for conventional PCR, as originally planned in the protocols. Same-sign significance is based on a fixed meta-analysis estimate, while effect size comparisons are based on random-effects meta-analysis. All statistical tests use the t distribution. PI, prediction interval, CI, confidence interval. For more information on replication criteria, see the registered replication protocol at https://osf.io/9rnuj."
 
-tbl_s20 <- tbl_s20 |>
+tbl_s21 <- tbl_s21 |>
   slice(-1) |>
   flextable() |>
   bold(j = 2) |>
   bold(i = 6) |>
   hline(i = 5:6) |>
   set_header_labels(MetricShortName = "By experiment") |>
-  add_footer_lines(value = as_paragraph(footer_text_tbl_s20)) |>
-  add_header_lines(values = paste0("Table S20 - Replication rates for PCR experiments using different aggregation methods. ")) |>
+  add_footer_lines(value = as_paragraph(footer_text_tbl_s21)) |>
+  add_header_lines(values = paste0("Table S21 - Replication rates for PCR experiments using different aggregation methods. ")) |>
   bold(i = 2, part = "header") |>
   set_table_properties(layout = "autofit")
 
 ### Saving ----
 save_tbl(
-  tbl_s20,
-  paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S20.docx")
+  tbl_s21,
+  paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S21.docx")
 )
-cat("\n### Table S20 generated! ###\n")
+cat("\n### Table S21 generated! ###\n")
 
-## Table S19 -----------------------------------------------------------------
-tbl_s19 <- df_by_experiment |>
+## Table S20 -----------------------------------------------------------------
+tbl_s20 <- df_by_experiment |>
   filter(Method == "MTT" | Method == "ALTMTT") |>
   filter(MA_Dist == "t") |>
   filter(Inclusion_Set == "all_exps_lab_units" | Inclusion_Set == "primary") |>
@@ -2776,8 +2847,8 @@ tbl_s19 <- df_by_experiment |>
   ) |>
   slice(1:7, 8, 9, 10)
 
-ordered_cols_tbl_s19 <- tibble(
-  colname = colnames(tbl_s19),
+ordered_cols_tbl_s20 <- tibble(
+  colname = colnames(tbl_s20),
   priority = case_when(
     str_starts(colname, "MetricShortName") ~ 1,
     str_starts(colname, "primary") ~ 2,
@@ -2788,8 +2859,8 @@ ordered_cols_tbl_s19 <- tibble(
   arrange(priority) |>
   pull(colname)
 
-tbl_s19 <- tbl_s19 |>
-  select(any_of(ordered_cols_tbl_s19)) |>
+tbl_s20 <- tbl_s20 |>
+  select(any_of(ordered_cols_tbl_s20)) |>
   dplyr::rename(any_of(c(
     `Primary (Paired)` = "primary_MTT_t",
     `Primary (Original)` = "primary_ALTMTT_t",
@@ -2883,37 +2954,37 @@ cv_row <- tibble(
   `All experiments (Original)` = cv_allexp_original
 )
 
-tbl_s19 <- tbl_s19 |>
+tbl_s20 <- tbl_s20 |>
   add_row(cv_row)
 
-footer_text_tbl_s19 <- "Paired columns show results of MTT analyzed with paired comparisons (MTT), while Original columns show the alternative non-paired analysis (ALTMTT). Same-sign significance is based on a fixed meta-analysis estimate, while effect size comparisons are based on random-effects meta-analysis. All statistical tests use the t distribution. PI, prediction interval; CI, confidence interval. Coefficient of variation is reported as median (range). For more information on replication criteria, see https://osf.io/9rnuj."
+footer_text_tbl_s20 <- "Paired columns show results of MTT analyzed with paired comparisons (MTT), while Original columns show the alternative non-paired analysis (ALTMTT). Same-sign significance is based on a fixed meta-analysis estimate, while effect size comparisons are based on random-effects meta-analysis. All statistical tests use the t distribution. PI, prediction interval; CI, confidence interval. Coefficient of variation is reported as median (range). For more information on replication criteria, see https://osf.io/9rnuj."
 
-tbl_s19 <- tbl_s19 |>
+tbl_s20 <- tbl_s20 |>
   slice(-1) |>
   flextable() |>
   bold(j = 2) |>
   bold(i = 6) |>
   hline(i = 5:6) |>
   set_header_labels(MetricShortName = "By experiment") |>
-  add_footer_lines(value = as_paragraph(footer_text_tbl_s19)) |>
-  add_header_lines(values = paste0("Table S19 - Replication rates for MTT experiments using paired vs original (non-paired) analyses. ")) |>
+  add_footer_lines(value = as_paragraph(footer_text_tbl_s20)) |>
+  add_header_lines(values = paste0("Table S20 - Replication rates for MTT experiments using paired vs original (non-paired) analyses. ")) |>
   bold(i = 2, part = "header") |>
   set_table_properties(layout = "autofit")
 
 ### Saving ----
 save_tbl(
-  tbl_s19,
-  paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S19.docx")
+  tbl_s20,
+  paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S20.docx")
 )
-cat("\n### Table S19 generated! ###\n")
+cat("\n### Table S20 generated! ###\n")
 
 
-## Table S24 ---------------------------------------------------------------
+## Table S25 ---------------------------------------------------------------
 df_coord_difficulties <- read_excel("other-data/Coordinating team assessment of difficulties.xlsx") |>
   clean_names() |>
   select(categoria, dificuldade, soma_um)
 
-tbl_s24 <- df_coord_difficulties |>
+tbl_s25 <- df_coord_difficulties |>
   group_by(categoria) |>
   reframe(
     dificuldade = dificuldade,
@@ -2954,18 +3025,18 @@ tbl_s24 <- df_coord_difficulties |>
   rename(Difficulty = dificuldade) |>
   rename(Rating = soma) |>
   flextable() |>
-  add_name("Table S24 – Project difficulties - Coordinating team assessment") |>
+  add_name("Table S25 – Project difficulties - Coordinating team assessment") |>
   set_table_properties(layout = "autofit")
 
 ### Saving ----
 save_tbl(
-  list(tbl_s24),
-  paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S24.docx")
+  list(tbl_s25),
+  paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S25.docx")
 )
 
-cat("\n### Table S24 generated! ###\n")
+cat("\n### Table S25 generated! ###\n")
 
-## Table S21 ---------------------------------------------------------------
+## Table S22 ---------------------------------------------------------------
 # Survey participant demographics
 
 ### Data loading and cleaning ----
@@ -3078,19 +3149,19 @@ tbl_s21_data <- all_summaries |>
   rename("Combined\nn=70" = Combined, "MTT\nn=22" = MTT, "PCR\nn=18" = PCR, "EPM\nn=30" = EPM)
 
 ### Create flextable ----
-tbl_s21 <- tbl_s21_data |>
+tbl_s22 <- tbl_s21_data |>
   flextable() |>
-  add_header_lines(values = "Table S21 – Survey participant demographics") |>
+  add_header_lines(values = "Table S22 – Survey participant demographics") |>
   bold(i = 1, part = "header") |>
   set_table_properties(layout = "autofit")
 
 ### Saving ----
 save_tbl(
-  list(tbl_s21),
-  paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S21.docx")
+  list(tbl_s22),
+  paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S22.docx")
 )
 
-cat("\n### Table S21 generated! ###\n")
+cat("\n### Table S22 generated! ###\n")
 
 ## Text-Cited Numbers ------------------------------------------------------
 
