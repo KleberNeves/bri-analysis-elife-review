@@ -287,10 +287,10 @@ bri_ggsave(
 )
 
 #---
-## Table S22 ----
+## Table S23 ----
 #---
 
-tbl_s22 <- cat_protocol |>
+tbl_s23 <- cat_protocol |>
   mutate(protocol_labels = protocol_labels_fig) |>
   slice(1:5) |>
   arrange(desc(category_counts)) |>
@@ -352,10 +352,10 @@ tbl_s22 <- cat_protocol |>
   add_footer_lines("Table shows the various categories and subcategories for protocol deviations (in order of general category frequency, as in Figure 5), with illustrative examples of lab responses for each subcategory.")
 
 save_tbl(
-  list(tbl_s22),
-  paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S22.docx")
+  list(tbl_s23),
+  paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S23.docx")
 )
-cat("\n### Table S22 generated! ###\n")
+cat("\n### Table S23 generated! ###\n")
 
 #---
 ## Plot 5 - Could the deviations have been prevented? ----
@@ -1225,7 +1225,7 @@ difficulties.labels.fig[["8"]] <- "Other"
 
 bri_ggsave(paste0(output_path, "/self-assessment/", "Figure S9.png"), plot = fig_s9, width = 20, height = 25, units = "cm")
 
-## Table S23 ---------------------------------------------------------------
+## Table S24 ---------------------------------------------------------------
 
 
 # Vector with the desired order. Note that strings that begin and end with "**"
@@ -1283,7 +1283,7 @@ final_tbl <- final_tbl |>
   )
 
 # Replace NA values in 'labels' with 'Label' and finalize the selection.
-tbl_s23 <- final_tbl |>
+tbl_s24 <- final_tbl |>
   mutate(labels = if_else(is.na(labels), Label, labels)) |>
   select(labels, Count) |>
   rename(Label = labels) |>
@@ -1294,10 +1294,10 @@ tbl_s23 <- final_tbl |>
   add_footer_lines("Table shows the various categories and subcategories for general difficulties (in order of general category frequency, as in Figure S3), with illustrative examples of participant responses for each subcategory.")
 
 save_tbl(
-  list(tbl_s23),
-  paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S23.docx")
+  list(tbl_s24),
+  paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S24.docx")
 )
-cat("\n### Table S23 generated! ###\n")
+cat("\n### Table S24 generated! ###\n")
 
 ## Self-assessments ----
 
