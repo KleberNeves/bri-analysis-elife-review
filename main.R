@@ -58,75 +58,77 @@ list_of_sets <- colnames(inclusion_sets)[str_detect(
   "^analysis_"
 )]
 
-for (setcol in list_of_sets) {
-  message("\n\n\n\n")
-  message(setcol)
+for (es_corr in c(FALSE, TRUE)) {
+  for (setcol in list_of_sets) {
+    message("\n\n\n\n")
+    message(paste0(setcol, if (es_corr) " (ES corrected)" else " (ES uncorrected)"))
 
-  if (
-    !(setcol %in%
-      c(
-        "analysis_only_80_power_a_posteriori_T",
-        "analysis_only_80_power_a_posteriori_KNHA",
-        "analysis_only_80_power_a_posteriori_bigexp"
-      ))
-  ) {
-    # Run analysis with z distribution only with inclusion sets also using z
-    run_all_meta_analyses(
-      inclusion_set_column = setcol,
-      save_results_to = results_path,
-      params = list(exclude_outliers = F, ma_dist = "z"),
-      simulated = F
-    )
-  }
+    if (
+      !(setcol %in%
+        c(
+          "analysis_only_80_power_a_posteriori_T",
+          "analysis_only_80_power_a_posteriori_KNHA",
+          "analysis_only_80_power_a_posteriori_bigexp"
+        ))
+    ) {
+      # Run analysis with z distribution only with inclusion sets also using z
+      run_all_meta_analyses(
+        inclusion_set_column = setcol,
+        save_results_to = results_path,
+        params = list(exclude_outliers = F, ma_dist = "z", es_correction = es_corr),
+        simulated = F
+      )
+    }
 
-  if (
-    !(setcol %in%
-      c(
-        "analysis_only_80_power_a_posteriori_Z",
-        "analysis_only_80_power_a_posteriori_KNHA",
-        "analysis_only_80_power_a_posteriori_bigexp"
-      ))
-  ) {
-    # Run analysis with t distribution only with inclusion sets also using t
-    run_all_meta_analyses(
-      inclusion_set_column = setcol,
-      save_results_to = results_path,
-      params = list(exclude_outliers = F, ma_dist = "t"),
-      simulated = F
-    )
-  }
+    if (
+      !(setcol %in%
+        c(
+          "analysis_only_80_power_a_posteriori_Z",
+          "analysis_only_80_power_a_posteriori_KNHA",
+          "analysis_only_80_power_a_posteriori_bigexp"
+        ))
+    ) {
+      # Run analysis with t distribution only with inclusion sets also using t
+      run_all_meta_analyses(
+        inclusion_set_column = setcol,
+        save_results_to = results_path,
+        params = list(exclude_outliers = F, ma_dist = "t", es_correction = es_corr),
+        simulated = F
+      )
+    }
 
-  if (
-    !(setcol %in%
-      c(
-        "analysis_only_80_power_a_posteriori_Z",
-        "analysis_only_80_power_a_posteriori_T",
-        "analysis_only_80_power_a_posteriori_bigexp"
-      ))
-  ) {
-    # Run analysis with t distribution only with inclusion sets also using t
-    run_all_meta_analyses(
-      inclusion_set_column = setcol,
-      save_results_to = results_path,
-      params = list(exclude_outliers = F, ma_dist = "knha"),
-      simulated = F
-    )
-  }
+    if (
+      !(setcol %in%
+        c(
+          "analysis_only_80_power_a_posteriori_Z",
+          "analysis_only_80_power_a_posteriori_T",
+          "analysis_only_80_power_a_posteriori_bigexp"
+        ))
+    ) {
+      # Run analysis with knha distribution only with inclusion sets also using knha
+      run_all_meta_analyses(
+        inclusion_set_column = setcol,
+        save_results_to = results_path,
+        params = list(exclude_outliers = F, ma_dist = "knha", es_correction = es_corr),
+        simulated = F
+      )
+    }
 
-  if (
-    !(setcol %in%
-      c(
-        "analysis_only_80_power_a_posteriori_Z",
-        "analysis_only_80_power_a_posteriori_KNHA"
-      ))
-  ) {
-    # Run analysis with bigexp and only with inclusion sets also using t
-    run_all_meta_analyses(
-      inclusion_set_column = setcol,
-      save_results_to = results_path,
-      params = list(exclude_outliers = F, ma_dist = "bigexp"),
-      simulated = F
-    )
+    if (
+      !(setcol %in%
+        c(
+          "analysis_only_80_power_a_posteriori_Z",
+          "analysis_only_80_power_a_posteriori_KNHA"
+        ))
+    ) {
+      # Run analysis with bigexp and only with inclusion sets also using bigexp
+      run_all_meta_analyses(
+        inclusion_set_column = setcol,
+        save_results_to = results_path,
+        params = list(exclude_outliers = F, ma_dist = "bigexp", es_correction = es_corr),
+        simulated = F
+      )
+    }
   }
 }
 
@@ -165,6 +167,7 @@ list_of_analyses <- list.dirs(
   full.names = T
 )
 list_of_analyses <- list_of_analyses[file.exists(paste0(list_of_analyses, "/Replication Assessment by Experiment.tsv"))]
+list_of_analyses <- list_of_analyses[!str_detect(basename(list_of_analyses), "es_corrected")]
 
 # Prepares the predictor data, adjusting names and preprocessing predictor calculations
 source("predictor-data-prep.R")

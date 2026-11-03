@@ -2833,7 +2833,7 @@ plot_specification_curve <- function(results_path, include_method, suffix = "") 
         Method_Individual = Method
       )
 
-    spec_parameters <- c("Inclusion_Set", "Level", "MA_Dist", "Metric", "Method_Individual")
+    spec_parameters <- c("Inclusion_Set", "Level", "MA_Dist", "Metric", "Method_Individual", "ES_Correction")
 
     method_levels <- na.omit(unique(AGGDATA_TOG$Method_Individual))
     # Ensure stable order of method levels
@@ -2865,18 +2865,21 @@ plot_specification_curve <- function(results_path, include_method, suffix = "") 
     AGGDATA_TOG <- AGGDATA_TOG |> filter(Metric %in% c(metric_order, indiv_metric_order))
     
     inclusion_order <- c(
+      "Primary",
+      "Lab's choice",
       "All experiments",
       "≥2 replications",
-      "Lab's choice",
       "3 replications",
-      "≥80% power (t - # of replications)",
       "≥80% power (t - # of units)",
       "≥80% power (z)",
-      "≥80% power (single mean)",
-      "Primary"
+      "≥80% power (t - # of replications)",
+      "≥80% power (single mean)"
     )
     inclusion_order <- inclusion_order[inclusion_order %in% inclusion_levels]
     
+    es_correction_levels <- c("Without correction", "With correction")
+    es_correction_order <- es_correction_levels[es_correction_levels %in% unique(AGGDATA_TOG$ES_Correction)]
+
     ma_dist_order <- c(
       "t distribution (# of replications)",
       "t distribution (# of units)",
@@ -2892,19 +2895,21 @@ plot_specification_curve <- function(results_path, include_method, suffix = "") 
       "Individual replication",
       inclusion_order,
       method_levels,
+      es_correction_order,
       ma_dist_order
     ))
 
     # Methods in black, as requested
     method_colors <- rep("black", length(method_levels))
     spec_colors <- rev(c(
-      rep(RColorBrewer::brewer.pal(5, "Dark2")[1], length(1:7)),
+      rep(RColorBrewer::brewer.pal(5, "Dark2")[1], length(metric_order)),
       rep(RColorBrewer::brewer.pal(7, "Greens")[7], 1),
-      rep(RColorBrewer::brewer.pal(5, "Dark2")[1], length(8:10)),
+      rep(RColorBrewer::brewer.pal(5, "Dark2")[1], length(indiv_metric_order)),
       rep(RColorBrewer::brewer.pal(7, "Greens")[7], 1),
-      rep(RColorBrewer::brewer.pal(7, "Blues")[7], length(inclusion_levels)),
+      rep(RColorBrewer::brewer.pal(7, "Blues")[7], length(inclusion_order)),
       method_colors,
-      rep(RColorBrewer::brewer.pal(7, "Oranges")[7], length(ma_dist_levels))
+      rep(RColorBrewer::brewer.pal(7, "Purples")[7], length(es_correction_order)),
+      rep(RColorBrewer::brewer.pal(7, "Oranges")[7], length(ma_dist_order))
     ))
 
     # Deduplicate breaks while keeping order and map colors to labels
@@ -2931,7 +2936,7 @@ plot_specification_curve <- function(results_path, include_method, suffix = "") 
         MTT_Pairing = if_else(str_detect(Method, "ALTMTT"), "MTT (original)", "MTT (paired)")
       )
 
-    spec_parameters <- c("Inclusion_Set", "Level", "MA_Dist", "Metric", "PCR_Scale", "MTT_Pairing")
+    spec_parameters <- c("Inclusion_Set", "Level", "MA_Dist", "Metric", "PCR_Scale", "MTT_Pairing", "ES_Correction")
 
     available_inclusion_levels <- unique(as.character(AGGDATA_TOG$Inclusion_Set))
     inclusion_levels <- desired_inclusion_levels[desired_inclusion_levels %in% available_inclusion_levels]
@@ -2959,21 +2964,24 @@ plot_specification_curve <- function(results_path, include_method, suffix = "") 
     AGGDATA_TOG <- AGGDATA_TOG |> filter(Metric %in% c(metric_order, indiv_metric_order))
     
     inclusion_order <- c(
+      "Primary",
+      "Lab's choice",
       "All experiments",
       "≥2 replications",
-      "Lab's choice",
       "3 replications",
-      "≥80% power (t - # of replications)",
       "≥80% power (t - # of units)",
       "≥80% power (z)",
-      "≥80% power (single mean)",
-      "Primary"
+      "≥80% power (t - # of replications)",
+      "≥80% power (single mean)"
     )
     inclusion_order <- inclusion_order[inclusion_order %in% inclusion_levels]
     
     pcr_order <- c("PCR (log)", "PCR (linear)")
     mtt_order <- c("MTT (paired)", "MTT (original)")
     
+    es_correction_levels <- c("Without correction", "With correction")
+    es_correction_order <- es_correction_levels[es_correction_levels %in% unique(AGGDATA_TOG$ES_Correction)]
+
     ma_dist_order <- c(
       "t distribution (# of replications)",
       "t distribution (# of units)",
@@ -2990,18 +2998,20 @@ plot_specification_curve <- function(results_path, include_method, suffix = "") 
       inclusion_order,
       pcr_order,
       mtt_order,
+      es_correction_order,
       ma_dist_order
     ))
 
     spec_colors <- rev(c(
-      rep(RColorBrewer::brewer.pal(5, "Dark2")[1], length(1:7)),
+      rep(RColorBrewer::brewer.pal(5, "Dark2")[1], length(metric_order)),
       rep(RColorBrewer::brewer.pal(7, "Greens")[7], 1),
-      rep(RColorBrewer::brewer.pal(5, "Dark2")[1], length(8:10)),
+      rep(RColorBrewer::brewer.pal(5, "Dark2")[1], length(indiv_metric_order)),
       rep(RColorBrewer::brewer.pal(7, "Greens")[7], 1),
-      rep(RColorBrewer::brewer.pal(7, "Blues")[7], length(inclusion_levels)),
-      rep(RColorBrewer::brewer.pal(7, "Greys")[7], 2),  # PCR_Scale (2 levels)
-      rep(RColorBrewer::brewer.pal(7, "Greys")[5], 2),  # MTT_Pairing (2 levels)
-      rep(RColorBrewer::brewer.pal(7, "Oranges")[7], length(ma_dist_levels))
+      rep(RColorBrewer::brewer.pal(7, "Blues")[7], length(inclusion_order)),
+      rep(RColorBrewer::brewer.pal(7, "Greys")[7], length(pcr_order)),
+      rep(RColorBrewer::brewer.pal(7, "Greys")[5], length(mtt_order)),
+      rep(RColorBrewer::brewer.pal(7, "Purples")[7], length(es_correction_order)),
+      rep(RColorBrewer::brewer.pal(7, "Oranges")[7], length(ma_dist_order))
     ))
 
     spec_breaks <- unique(spec_parameters_levels)

@@ -9,11 +9,19 @@ options(warn = -1)
 
 p_load(rcompanion)
 
+format_frequency <- function(x, n) {
+  paste0(x, "/", n, " (", round(100 * x / n), "%)")
+}
+
 # Tables ------------------------------------------------------------------
 
 ## Replication Rates -------------------------------------------------------
 
-df_replication_rate <- read_tsv(paste0("output/", results_path, "/Replication Rate Aggregate.tsv"), show_col_types = FALSE) |> 
+df_replication_rate <- read_tsv(paste0("output/", results_path, "/Replication Rate Aggregate.tsv"), show_col_types = FALSE)
+if ("ES_Correction" %in% names(df_replication_rate)) {
+  df_replication_rate <- df_replication_rate |> filter(ES_Correction == "Without correction")
+}
+df_replication_rate <- df_replication_rate |>
   mutate(MetricShortName = case_when(
     MetricShortName == "Same-sign significance (p<0.05)" ~ "FEMA is significant and has same signal as original",
     MetricShortName == "Original in replication 95% PI" ~ "Original estimate within PI of REMA",
@@ -1673,7 +1681,30 @@ df_extracted_data <- read_tsv("other-data/Original Experiments Statistical Summa
   clean_names() |>
   select(!c(original_article_doi, selected_figure_table, method))
 
-df_tbl_s3 <- df_predictor_data |> left_join(df_extracted_data, by = "exp", suffix = c("_predictor_data", "_extracted_data"))
+# Compute original_cv directly for all original experiments using bias-corrected escalc logic
+if (!exists("arm_cvln") || !exists("pool_cv")) {
+  source("reproducibility.R")
+}
+
+orig_arm_c <- arm_cvln(
+  df_extracted_data$control_mean,
+  df_extracted_data$control_sd,
+  df_extracted_data$control_sample_size_for_d_fs
+)
+orig_arm_t <- arm_cvln(
+  df_extracted_data$treated_mean,
+  df_extracted_data$treated_sd,
+  df_extracted_data$treated_sample_size_for_d_fs
+)
+df_extracted_data$original_cv <- pool_cv(
+  orig_arm_c$cv,
+  orig_arm_c$vi,
+  orig_arm_t$cv,
+  orig_arm_t$vi
+)$cv
+
+df_tbl_s3 <- df_predictor_data |>
+  left_join(df_extracted_data, by = "exp", suffix = c("_predictor_data", "_extracted_data"))
 
 df_predictor_data <- df_predictor_data |>
   mutate(
@@ -1737,7 +1768,7 @@ tbl_s3_1 <- df_tbl_s3 |>
   mutate(sample_size = (control_sample_size_for_d_fs + treated_sample_size_for_d_fs) / 2) |>
   mutate(hedgesg = hedges_g(cohen_s_d, control_sample_size_for_d_fs + treated_sample_size_for_d_fs)) |>
   mutate(hedgesg = abs(hedgesg)) |> 
-  mutate(coef_var = pooled_sd / ((control_mean + treated_mean) / 2)) |>
+  mutate(coef_var = original_cv) |>
   select(
     biological_model,
     sample_size,
@@ -1879,71 +1910,75 @@ cat("\n### Table S3 generated! ###\n")
 
 # Original author responses to contact for protocol information and data
 
-df_original_authors <- read_excel("other-data/Original_Author_Data.xlsx") |>
-  clean_names() |>
-  mutate(method = str_extract(experimento, "EPM|PCR|MTT"))
+if (file.exists("other-data/Original_Author_Data.xlsx")) {
+  df_original_authors <- read_excel("other-data/Original_Author_Data.xlsx") |>
+    clean_names() |>
+    mutate(method = str_extract(experimento, "EPM|PCR|MTT"))
 
-format_frequency <- function(x, n) {
-  paste0(x, "/", n, " (", round(100 * x / n), "%)")
-}
+  format_frequency <- function(x, n) {
+    paste0(x, "/", n, " (", round(100 * x / n), "%)")
+  }
 
-tbl_s4 <- bind_rows(
-  df_original_authors,
-  df_original_authors |> mutate(method = "Total")
-) |>
-  mutate(method = factor(method, levels = c("MTT", "PCR", "EPM", "Total"))) |>
-  group_by(method) |>
-  summarise(
-    n = n(),
-    complete = sum(preenchimento == 3, na.rm = T),
-    partial = sum(preenchimento == 2, na.rm = T),
-    no_information = sum(preenchimento == 1, na.rm = T),
-    no_response = sum(preenchimento == 0, na.rm = T),
-    days_to_respond = paste0(
-      median(intervalo, na.rm = T), " (",
-      min(intervalo, na.rm = T), "-",
-      max(intervalo, na.rm = T), ")"
-    ),
-    corresponding_author = sum(autor_resposta == 1, na.rm = T),
-    raw_data = sum(dados == 1, na.rm = T)
+  tbl_s4 <- bind_rows(
+    df_original_authors,
+    df_original_authors |> mutate(method = "Total")
   ) |>
-  mutate(across(
-    c(complete, partial, no_information, no_response, corresponding_author, raw_data),
-    ~ format_frequency(., n)
-  )) |>
-  select(
-    Method = method,
-    `Complete response` = complete,
-    `Partial response` = partial,
-    `No information` = no_information,
-    `No response` = no_response,
-    `Days to respond` = days_to_respond,
-    `Corresponding author response` = corresponding_author,
-    `Raw data` = raw_data
+    mutate(method = factor(method, levels = c("MTT", "PCR", "EPM", "Total"))) |>
+    group_by(method) |>
+    summarise(
+      n = n(),
+      complete = sum(preenchimento == 3, na.rm = T),
+      partial = sum(preenchimento == 2, na.rm = T),
+      no_information = sum(preenchimento == 1, na.rm = T),
+      no_response = sum(preenchimento == 0, na.rm = T),
+      days_to_respond = paste0(
+        median(intervalo, na.rm = T), " (",
+        min(intervalo, na.rm = T), "-",
+        max(intervalo, na.rm = T), ")"
+      ),
+      corresponding_author = sum(autor_resposta == 1, na.rm = T),
+      raw_data = sum(dados == 1, na.rm = T)
+    ) |>
+    mutate(across(
+      c(complete, partial, no_information, no_response, corresponding_author, raw_data),
+      ~ format_frequency(., n)
+    )) |>
+    select(
+      Method = method,
+      `Complete response` = complete,
+      `Partial response` = partial,
+      `No information` = no_information,
+      `No response` = no_response,
+      `Days to respond` = days_to_respond,
+      `Corresponding author response` = corresponding_author,
+      `Raw data` = raw_data
+    )
+
+  tbl_s4 <- tbl_s4 |>
+    flextable() |>
+    bold(part = "header") |>
+    bold(i = 4) |>
+    hline(i = 3) |>
+    align(align = "center", part = "all") |>
+    add_footer_lines(value = as_paragraph(
+      as_b("Table S4. Original author responses to contact for protocol information and data"),
+      ". Authors were contacted in 3 steps: one aimed at the corresponding author, one including the first/last author and one including all authors (see ",
+      hyperlink_text("https://osf.io/3dn4x", url = "https://osf.io/3dn4x"),
+      "). Table shows the frequency of different categories of response to the protocol detail form (first 4 columns), including authors who filled in the complete form, partially filled it, responded to contact but provided no information or did not respond. Complete forms do not mean that every protocol detail asked for was provided, only that authors filled the whole form (e.g. protocol information may have still have been recorded as not available). Additional columns include time to response after contact (median/range), frequency of corresponding authors who responded and frequency of original data sharing."
+    )) |>
+    align(align = "justify", part = "footer") |>
+    set_table_properties(layout = "autofit")
+
+  ### Saving ----
+  save_tbl(
+    list(tbl_s4),
+    paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S4.docx")
   )
 
-tbl_s4 <- tbl_s4 |>
-  flextable() |>
-  bold(part = "header") |>
-  bold(i = 4) |>
-  hline(i = 3) |>
-  align(align = "center", part = "all") |>
-  add_footer_lines(value = as_paragraph(
-    as_b("Table S4. Original author responses to contact for protocol information and data"),
-    ". Authors were contacted in 3 steps: one aimed at the corresponding author, one including the first/last author and one including all authors (see ",
-    hyperlink_text("https://osf.io/3dn4x", url = "https://osf.io/3dn4x"),
-    "). Table shows the frequency of different categories of response to the protocol detail form (first 4 columns), including authors who filled in the complete form, partially filled it, responded to contact but provided no information or did not respond. Complete forms do not mean that every protocol detail asked for was provided, only that authors filled the whole form (e.g. protocol information may have still have been recorded as not available). Additional columns include time to response after contact (median/range), frequency of corresponding authors who responded and frequency of original data sharing."
-  )) |>
-  align(align = "justify", part = "footer") |>
-  set_table_properties(layout = "autofit")
-
-### Saving ----
-save_tbl(
-  list(tbl_s4),
-  paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S4.docx")
-)
-
-cat("\n### Table S4 generated! ###\n")
+  cat("\n### Table S4 generated! ###\n")
+} else {
+  message("\n### Table S4 skipped (other-data/Original_Author_Data.xlsx not found) ###\n")
+}
 
 
 ## Table S5 ----------------------------------------------------------------
@@ -2134,7 +2169,7 @@ df_experiments_numbers_overview_wide <- read_tsv(paste0("output/", results_path,
 
 form1 <- read_excel("./other-data/self-assessment/Dificuldades Experimentais (Responses) - manual edit.xlsx")
 
-df_inclusion_sets$`Validation - Decision`[inclusion_sets$`Validation - Decision` == "Low sample size"] <- "Excluded"
+df_inclusion_sets$`Validation - Decision`[df_inclusion_sets$`Validation - Decision` == "Low sample size"] <- "Excluded"
 
 inclusion_sets_short <- df_inclusion_sets |>
   filter(UNIT == "BRI") |>
@@ -2952,7 +2987,8 @@ cv_row <- tibble(
   `Primary (Original)` = cv_primary_original,
   `All experiments (Paired)` = cv_allexp_paired,
   `All experiments (Original)` = cv_allexp_original
-)
+) |>
+  select(any_of(colnames(tbl_s20)))
 
 tbl_s20 <- tbl_s20 |>
   add_row(cv_row)
@@ -3189,8 +3225,8 @@ doc <- doc |>
 result_b <- df_assessment_by_experiment |>
   filter(str_detect(EXP, "^(EPM|MTT|ALTPCR)")) |>
   summarise(
-    count = sum(original_cv < replication_cv, na.rm = TRUE),
-    percent = mean(original_cv < replication_cv, na.rm = TRUE) * 100
+    count = sum(original_cv > replication_cv, na.rm = TRUE),
+    percent = mean(original_cv > replication_cv, na.rm = TRUE) * 100
   )
 
 doc <- doc |>
@@ -3218,15 +3254,17 @@ result_d <- df_assessment_by_experiment |>
     technique = case_when(
       str_detect(EXP, "EPM") ~ "EPM",
       str_detect(EXP, "^(MTT)") ~ "MTT",
-      str_detect(EXP, "^(PCR)(?!ALT)") ~ "PCR",
       str_detect(EXP, "^(ALTPCR)") ~ "ALTPCR"
     )
   ) |>
+  # Main PCR is excluded: its replication CVs are NA by design, so the group
+  # would contain no complete pairs and wilcox.test() would error rather than
+  # return NA. ALTPCR supplies the PCR comparison.
+  filter(!is.na(technique)) |>
   group_by(technique) |>
   summarise(
     p_value = wilcox.test(original_cv, replication_cv, paired = TRUE, na.action = na.omit)$p.value,
     statistic = wilcoxonZ(original_cv, replication_cv, paired = TRUE)
-    
   )
 
 doc <- doc |>

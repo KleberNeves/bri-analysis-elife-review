@@ -5,6 +5,104 @@
 
 ### ### ### ### ### ### ### ### ### ### ### ###
 
+# ---------------------------------------------------------------------------
+# Small-sample (second-order Taylor) bias corrections, set separately for
+# effect sizes and for coefficients of variation.
+#
+# metafor >= 5.0-1 applies these corrections by default; metafor <= 4.8-0 did
+# not, and the published analysis was run under 4.8-0. Setting the flags makes
+# the choice explicit and version-independent rather than a side effect of the
+# installed metafor version.
+#
+# ES_SMALL_SAMPLE_CORRECTION -> escalc(measure = "ROM" / "ROMC")
+#   FALSE keeps the published convention. The correction moves effect sizes
+#   only slightly, and original and replication estimates carry bias of the
+#   same kind, so it largely cancels in their comparison. MD and MC (PCR) have
+#   no such correction and are unaffected either way.
+#
+# CV_SMALL_SAMPLE_CORRECTION -> escalc(measure = "CVLN")
+#   TRUE corrects the downward bias of log CV, whose correction term is
+#   1/(2(n-1)) and so depends on sample size alone. Original experiments
+#   (median n = 5 per group) and replications (larger, powered samples)
+#   differ in n, so the bias does not cancel when their CVs are compared.
+#
+# NOTE: neither flag is passed to escalc(measure = "SMD"). For SMD,
+# correct = FALSE means "no Hedges' g correction at all" (cmicalc method
+# "none"), i.e. raw Cohen's d, which is a different change from the one
+# intended here. SMD keeps metafor's default (Hedges' g).
+# ---------------------------------------------------------------------------
+
+ES_SMALL_SAMPLE_CORRECTION <- FALSE
+CV_SMALL_SAMPLE_CORRECTION <- TRUE
+
+# log CV and its sampling variance for a single arm.
+# cv = 0 marks an arm with no variability by construction (a normalised
+# control); cv = NA marks an arm that cannot be estimated at all. pool_cv()
+# gives both zero weight.
+arm_cvln <- function(m_vec, sd_vec, n_vec) {
+  k <- length(m_vec)
+  if (k == 0) {
+    return(list(cv = numeric(0), vi = numeric(0)))
+  }
+
+  cv <- rep(NA_real_, k)
+  vi <- rep(NA_real_, k)
+
+  present <- !is.na(m_vec) & !is.na(sd_vec) & !is.na(n_vec) & m_vec != 0
+  structural_zero <- present & (sd_vec == 0)
+  cv[structural_zero] <- 0
+
+  ok <- present & (sd_vec > 0) & (n_vec > 1)
+  if (any(ok)) {
+    es <- tryCatch(
+      escalc(
+        measure = "CVLN",
+        mi = abs(m_vec[ok]),
+        sdi = sd_vec[ok],
+        ni = n_vec[ok],
+        correct = CV_SMALL_SAMPLE_CORRECTION
+      ),
+      error = function(e) NULL
+    )
+    if (!is.null(es)) {
+      yi <- as.numeric(es$yi)
+      vv <- as.numeric(es$vi)
+      good <- is.finite(yi) & is.finite(vv)
+      idx <- which(ok)[good]
+      cv[idx] <- exp(yi[good])
+      vi[idx] <- vv[good]
+    }
+  }
+
+  list(cv = cv, vi = vi)
+}
+
+# Pool two arms in quadrature. The variance follows from the delta method:
+# with w_c = CV_c^2 / (CV_c^2 + CV_t^2) and w_t = 1 - w_c,
+#     Var(log CV_pooled) ~= w_c^2 * V_c + w_t^2 * V_t
+# which reduces to (V_c + V_t)/4 when the arms are equally variable, and to
+# V_t alone when the control CV is 0 (CV_t/sqrt(2) is a constant rescaling,
+# and a constant offset on a log scale leaves the sampling variance
+# unchanged). Arms are independent samples, so the covariance term is 0.
+pool_cv <- function(cv_c, vi_c, cv_t, vi_t) {
+  cv_c0 <- ifelse(is.na(cv_c), 0, cv_c)
+  cv_t0 <- ifelse(is.na(cv_t), 0, cv_t)
+
+  den <- cv_c0^2 + cv_t0^2
+  pooled <- ifelse(den > 0, sqrt(den / 2), NA_real_)
+
+  w_c <- ifelse(den > 0, cv_c0^2 / den, 0)
+  w_t <- 1 - w_c
+
+  vi <- (w_c^2) * ifelse(is.na(vi_c), 0, vi_c) +
+    (w_t^2) * ifelse(is.na(vi_t), 0, vi_t)
+  vi <- ifelse(!is.na(pooled) & vi > 0, vi, NA_real_)
+
+  arms <- as.integer((!is.na(vi_c) & cv_c0 > 0) + (!is.na(vi_t) & cv_t0 > 0))
+
+  list(cv = pooled, yi = log(pooled), vi = vi, arms = arms)
+}
+
 # Paths to necessary files
 
 # Data from experiments
@@ -81,7 +179,8 @@ run_all_meta_analyses <- function(
   path_suffix <- paste0(
     " ",
     params$ma_dist,
-    ifelse(params$exclude_outliers, " no outliers", "")
+    ifelse(params$exclude_outliers, " no outliers", ""),
+    ifelse(isTRUE(params$es_correction), " es_corrected", "")
   )
 
   dir.create(paste0("./output/", save_results_to))
@@ -186,6 +285,8 @@ perform_analysis <- function(
 ) {
   print(paste0(EXP_code, " ", params$ma_dist))
 
+  es_correction <- if (!is.null(params$es_correction)) isTRUE(params$es_correction) else ES_SMALL_SAMPLE_CORRECTION
+
   # Flags for PCR types and exponents
   is_PCR <- str_detect(EXP_code, "PCR") & !str_detect(EXP_code, "ALTPCR")
   is_ALTPCR <- str_detect(EXP_code, "ALTPCR")
@@ -193,11 +294,16 @@ perform_analysis <- function(
   is_MTT_main <- str_detect(EXP_code, "^MTT")
 
   if (is_PCR | is_ALTPCR) {
+    # PCR_meta.csv holds one row per lab x experiment, and a few experiments
+    # have labs that recorded different Primary Outcome values (PCR125, PCR147,
+    # PCR69). Indexing [1] made the exponent depend on row order; requiring all
+    # rows to agree is order-independent and treats a genuinely mixed
+    # experiment as quantitative rather than as a coin flip.
     PCR_exponent <- ifelse(
-      (meta_data_PCR |> filter(EXP == EXP_code) |> pull(`Primary Outcome`))[
-        1
-      ] ==
-        "Optical Density (a.u)",
+      all(
+        (meta_data_PCR |> filter(EXP == EXP_code) |> pull(`Primary Outcome`)) ==
+          "Optical Density (a.u)"
+      ),
       1,
       -1
     )
@@ -262,6 +368,7 @@ perform_analysis <- function(
     orig_data$`Treated Sample Size for DFs`
   orig_summary <- escalc(
     measure = "ROM",
+    correct = es_correction,
     m1i = orig_data$`Treated Mean`,
     m2i = orig_data$`Control Mean`,
     sd1i = orig_data$`Treated SD`,
@@ -299,7 +406,8 @@ perform_analysis <- function(
     original_es,
     paired_labs,
     params$ma_dist,
-    use_perc = is_MTT_main
+    use_perc = is_MTT_main,
+    es_correction = es_correction
   )
 
   if (is_ALTPCR) {
@@ -310,7 +418,8 @@ perform_analysis <- function(
       T,
       original_es,
       paired_labs,
-      params$ma_dist
+      params$ma_dist,
+      es_correction = es_correction
     )
   }
 
@@ -351,7 +460,8 @@ perform_analysis <- function(
       original_es,
       paired_labs_primary,
       "t",
-      use_perc = is_MTT_main
+      use_perc = is_MTT_main,
+      es_correction = es_correction
     )
   }
 
@@ -380,116 +490,125 @@ perform_analysis <- function(
     original_es,
     rep_es_with_perc_paired_labs,
     rep_es_with_perc_ma_dist,
-    use_perc = T
+    use_perc = T,
+    es_correction = es_correction
   )
 
-  # Calculate CVs and CV ratios via escalc (measure = "CVLN" (logCV))
-  safe_escalc_cvln <- function(m_vec, sd_vec, n_vec) {
-    if (length(m_vec) == 0 || (all(is.na(m_vec)))) {
-      return(list(
-        yi = rep(NA_real_, length(m_vec)),
-        vi = rep(NA_real_, length(m_vec))
-      ))
-    }
-    m_use <- abs(m_vec)
-    tryCatch(
-      {
-        escalc(measure = "CVLN", mi = m_use, sdi = sd_vec, ni = n_vec)
-      },
-      error = function(e) {
-        list(
-          yi = rep(NA_real_, length(m_vec)),
-          vi = rep(NA_real_, length(m_vec))
-        )
-      }
-    )
-  }
+  # ---------------------------------------------------------------------------
+  # Coefficients of variation
+  #
+  # Arms are pooled in quadrature:
+  #
+  #     CV_pooled = sqrt((CV_control^2 + CV_treated^2) / 2)
+  #
+  # For a control-normalised (paired) experiment the control SD is exactly 0 by
+  # construction, so the control CV is 0, and the formula reduces to
+  # CV_treated / sqrt(2). That is the right answer rather than a fudge: the
+  # normalised treated CV already carries both arms' variability, since
+  # CV_R^2 = CV_c^2 + CV_t^2 - 2*rho*CV_c*CV_t. Pooling it against a zero
+  # control therefore recovers the two-arm CV when rho = 0 and falls below it
+  # as the pairing tightens, which is the quantity of interest. One formula
+  # covers paired and unpaired designs, so there is no branch.
+  #
+  # Arms are pooled WITHIN each replication and only then meta-analysed, so
+  # that the replication estimate and the original experiment are defined
+  # identically, and so that experiments whose replications differ in pairing
+  # are handled correctly.
+  # ---------------------------------------------------------------------------
 
-  orig_cv_g1 <- safe_escalc_cvln(
-    orig_data$`Treated Mean`,
-    orig_data$`Treated SD`,
-    orig_data$`Treated Sample Size for DFs`
-  )
-  orig_cv_g2 <- safe_escalc_cvln(
+  # --- original experiment
+  orig_arm_c <- arm_cvln(
     orig_data$`Control Mean`,
     orig_data$`Control SD`,
     orig_data$`Control Sample Size for DFs`
   )
-  log_original_cv <- (orig_cv_g1$yi + orig_cv_g2$yi) / 2
-  original_cv <- exp(log_original_cv)
+  orig_arm_t <- arm_cvln(
+    orig_data$`Treated Mean`,
+    orig_data$`Treated SD`,
+    orig_data$`Treated Sample Size for DFs`
+  )
+  orig_pooled <- pool_cv(
+    orig_arm_c$cv,
+    orig_arm_c$vi,
+    orig_arm_t$cv,
+    orig_arm_t$vi
+  )
+  original_cv <- orig_pooled$cv
+  original_cv_arms <- orig_pooled$arms
 
+  # --- replications
   rep_es_df <- rep_es_with_perc$rep_es
+
   if (nrow(rep_es_df) > 0) {
-    rep_cv_g1 <- safe_escalc_cvln(
+    rep_arm_c <- arm_cvln(
       rep_es_df$mean_group_1,
       rep_es_df$sd_group_1,
       rep_es_df$n_group_1
     )
-    rep_cv_g2 <- safe_escalc_cvln(
+    rep_arm_t <- arm_cvln(
       rep_es_df$mean_group_2,
       rep_es_df$sd_group_2,
       rep_es_df$n_group_2
     )
-    log_rep_cv <- (rep_cv_g1$yi + rep_cv_g2$yi) / 2
-    rep_cv <- exp(log_rep_cv)
+    rep_pooled <- pool_cv(
+      rep_arm_c$cv,
+      rep_arm_c$vi,
+      rep_arm_t$cv,
+      rep_arm_t$vi
+    )
 
-    valid_g1 <- !is.na(rep_cv_g1$yi) &
-      !is.na(rep_cv_g1$vi) &
-      is.finite(rep_cv_g1$yi) &
-      is.finite(rep_cv_g1$vi)
-    valid_g2 <- !is.na(rep_cv_g2$yi) &
-      !is.na(rep_cv_g2$vi) &
-      is.finite(rep_cv_g2$yi) &
-      is.finite(rep_cv_g2$vi)
+    rep_cv <- rep_pooled$cv
+    rep_cv_arms <- rep_pooled$arms
 
-    if (sum(valid_g1) > 1) {
-      ma_cv_g1 <- rma(
-        yi = rep_cv_g1$yi[valid_g1],
-        vi = rep_cv_g1$vi[valid_g1],
+    usable <- !is.na(rep_pooled$yi) &
+      !is.na(rep_pooled$vi) &
+      is.finite(rep_pooled$yi) &
+      is.finite(rep_pooled$vi)
+
+    if (sum(usable) > 1) {
+      ma_cv <- rma(
+        yi = rep_pooled$yi[usable],
+        vi = rep_pooled$vi[usable],
         method = "REML"
       )
-      log_ma_cv_g1 <- as.numeric(coef(ma_cv_g1))
-    } else if (sum(valid_g1) == 1) {
-      log_ma_cv_g1 <- rep_cv_g1$yi[valid_g1]
+      mean_rep_cv <- exp(as.numeric(coef(ma_cv)))
+    } else if (sum(usable) == 1) {
+      mean_rep_cv <- exp(rep_pooled$yi[usable])
     } else {
-      log_ma_cv_g1 <- NA_real_
+      mean_rep_cv <- NA_real_
     }
 
-    if (sum(valid_g2) > 1) {
-      ma_cv_g2 <- rma(
-        yi = rep_cv_g2$yi[valid_g2],
-        vi = rep_cv_g2$vi[valid_g2],
-        method = "REML"
-      )
-      log_ma_cv_g2 <- as.numeric(coef(ma_cv_g2))
-    } else if (sum(valid_g2) == 1) {
-      log_ma_cv_g2 <- rep_cv_g2$yi[valid_g2]
+    mean_rep_cv_arms <- if (any(usable)) {
+      max(rep_pooled$arms[usable], na.rm = TRUE)
     } else {
-      log_ma_cv_g2 <- NA_real_
-    }
-
-    log_mean_rep_cv <- mean(c(log_ma_cv_g1, log_ma_cv_g2), na.rm = TRUE)
-    mean_rep_cv <- if (is.nan(log_mean_rep_cv) || is.na(log_mean_rep_cv)) {
-      NA_real_
-    } else {
-      exp(log_mean_rep_cv)
+      NA_integer_
     }
   } else {
     rep_cv <- numeric(0)
+    rep_cv_arms <- integer(0)
     mean_rep_cv <- NA_real_
+    mean_rep_cv_arms <- NA_integer_
+  }
+
+  # A coefficient of variation is only defined on a ratio scale. Main PCR data
+  # are delta-Ct values, which are log-scale and signed, so replication CVs are
+  # not reported for them; the ALTPCR analysis supplies PCR CVs from linearised
+  # relative expression. original_cv stays valid, because the original articles
+  # report relative expression rather than Ct values.
+  if (is_PCR) {
+    rep_cv <- rep(NA_real_, length(rep_cv))
+    rep_cv_arms <- rep(NA_integer_, length(rep_cv_arms))
+    mean_rep_cv <- NA_real_
+    mean_rep_cv_arms <- NA_integer_
   }
 
   # SMD Alternative Meta-Analysis for Predictor Analysis
-  orig_smd <- escalc(
-    measure = "SMD",
-    m1i = orig_data$`Treated Mean`,
-    m2i = orig_data$`Control Mean`,
-    sd1i = orig_data$`Treated SD`,
-    sd2i = orig_data$`Control SD`,
-    n1i = orig_data$`Treated Sample Size for DFs`,
-    n2i = orig_data$`Control Sample Size for DFs`
-  )
-  smd_orig_es <- orig_smd$yi[1]
+  # The original experiment's own SMD is no longer computed: it was used only
+  # to set the sign of the replication SMD, and original_es serves that purpose
+  # without inheriting the understated pooled SD of a control-normalised
+  # original. escalc(measure = "SMD") is left at metafor's default, since
+  # correct = FALSE there would remove the Hedges' g correction entirely rather
+  # than the second-order term this analysis is deciding about.
 
   if (nrow(rep_es_df) > 0) {
     rep_smd_escalc <- escalc(
@@ -501,6 +620,16 @@ perform_analysis <- function(
       n1i = rep_es_df$n_group_2,
       n2i = rep_es_df$n_group_1
     )
+    # delta-Ct runs opposite to expression: a lower Ct means more transcript.
+    # The ROM path already handles this through exp_only_PCR(); the SMD path
+    # must too, and on the replication side only. The original is already on
+    # the expression scale, so flipping both sides would cancel out in the sign
+    # correction below and change nothing. is_PCR excludes ALTPCR, which is
+    # linearised relative expression and needs no flip.
+    if (is_PCR && PCR_exponent == -1) {
+      rep_smd_escalc$yi <- -rep_smd_escalc$yi
+    }
+
     valid_smd <- !is.na(rep_smd_escalc$yi) &
       !is.na(rep_smd_escalc$vi) &
       is.finite(rep_smd_escalc$yi) &
@@ -517,12 +646,17 @@ perform_analysis <- function(
     } else {
       smd_rep_es <- NA_real_
     }
-    cs_smd_rep_es <- if (is.na(smd_orig_es) || is.na(smd_rep_es)) {
+    # Sign reference is the ROM-based original effect rather than the original
+    # SMD. For positive group means sign(SMD) == sign(ROM), so this is
+    # equivalent wherever both exist, but original_es is always available and
+    # does not inherit the inflated pooled SD that a control-normalised
+    # original produces.
+    cs_smd_rep_es <- if (is.na(original_es) || is.na(smd_rep_es)) {
       NA_real_
     } else {
-      sign(smd_orig_es / smd_rep_es) * abs(smd_rep_es)
+      sign(original_es / smd_rep_es) * abs(smd_rep_es)
     }
-    cs_smd_rep_indiv_es <- sign(smd_orig_es / rep_smd_escalc$yi) *
+    cs_smd_rep_indiv_es <- sign(original_es / rep_smd_escalc$yi) *
       abs(rep_smd_escalc$yi)
   } else {
     cs_smd_rep_es <- NA_real_
@@ -1114,7 +1248,9 @@ perform_analysis <- function(
       log_es_ratio = cs_original_es - cs_replication_es,
       es_ratio = exp(log_es_ratio),
       original_cv = original_cv,
+      original_cv_arms = original_cv_arms,
       replication_cv = mean_rep_cv,
+      replication_cv_arms = mean_rep_cv_arms,
       mean_abs_diff_reps = mean_abs_diff_reps,
       mean_abs_diff_reps_orig = mean_abs_diff_reps_orig,
       significant_reps = n_signif_tests,
@@ -1139,7 +1275,9 @@ perform_analysis <- function(
       t_score_individual = t_tests$t_statistic,
       t_pvalue = t_tests$pvalue,
       original_cv = original_cv,
+      original_cv_arms = original_cv_arms,
       replication_cv = rep_cv,
+      replication_cv_arms = rep_cv_arms,
       subjective_success = t_tests$SUBJ_SUCCESS,
       ma_only = LAB %in% excl
     )
@@ -1227,7 +1365,8 @@ make_rep_es_analysis <- function(
   original_es,
   paired_labs,
   ma_dist,
-  use_perc = F
+  use_perc = F,
+  es_correction = ES_SMALL_SAMPLE_CORRECTION
 ) {
   use_perc <- T
   rep_data <- map_dfr(data_fns, read_tsv, show_col_types = F)
@@ -1312,6 +1451,9 @@ make_rep_es_analysis <- function(
     }
     escalc(
       measure = m,
+      # Affects ROM and ROMC; ignored for MD and MC, which have no such
+      # correction, so PCR is unaffected either way.
+      correct = es_correction,
       m1i = a_rep_es$mean_group_2,
       m2i = a_rep_es$mean_group_1,
       sd1i = a_rep_es$sd_group_2,

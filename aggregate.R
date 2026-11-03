@@ -755,6 +755,7 @@ gather_all_rep_rates <- function(list_of_analyses, pn) {
           str_split(" ") |>
           unlist())[1],
         MA_Dist = (basename(p) |> str_trim() |> str_split(" ") |> unlist())[2],
+        ES_Correction = ifelse(str_detect(basename(p), "es_corrected"), "With correction", "Without correction"),
         IsPercentage = !(Metric %in%
           c(
             "Difference",
@@ -784,6 +785,7 @@ gather_all_rep_rates <- function(list_of_analyses, pn) {
         Inclusion_Set,
         Level,
         MA_Dist,
+        ES_Correction,
         Metric,
         MetricShortName,
         IsPercentage,
@@ -862,6 +864,7 @@ gather_all_rep_rates <- function(list_of_analyses, pn) {
           str_split(" ") |>
           unlist())[1],
         MA_Dist = (basename(p) |> str_trim() |> str_split(" ") |> unlist())[2],
+        ES_Correction = ifelse(str_detect(basename(p), "es_corrected"), "With correction", "Without correction"),
         IsPercentage = !(Metric %in%
           c(
             "Difference",
@@ -891,6 +894,7 @@ gather_all_rep_rates <- function(list_of_analyses, pn) {
         Inclusion_Set,
         Level,
         MA_Dist,
+        ES_Correction,
         Metric,
         MetricShortName,
         IsPercentage,
