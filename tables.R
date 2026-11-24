@@ -2978,7 +2978,7 @@ save_tbl(
 cat("\n### Table S19 generated! ###\n")
 
 
-## Table S21 -----------------------------------------------------------------
+## Table S24 -----------------------------------------------------------------
 tbl_s21 <- df_by_experiment |>
   filter(Method == "PCR" | Method == "ALTPCR") |>
   filter(MA_Dist == "t") |>
@@ -3053,18 +3053,18 @@ tbl_s21 <- tbl_s21 |>
   hline(i = 5:6) |>
   set_header_labels(MetricShortName = "By experiment") |>
   add_footer_lines(value = as_paragraph(footer_text_tbl_s21)) |>
-  add_header_lines(values = paste0("Table S21 - Replication rates for PCR experiments using different aggregation methods. ")) |>
+  add_header_lines(values = paste0("Table S24 - Replication rates for PCR experiments using different aggregation methods. ")) |>
   bold(i = 2, part = "header") |>
   set_table_properties(layout = "autofit")
 
 ### Saving ----
 save_tbl(
   tbl_s21,
-  paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S21.docx")
+  paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S24.docx")
 )
-cat("\n### Table S21 generated! ###\n")
+cat("\n### Table S24 generated! ###\n")
 
-## Table S20 -----------------------------------------------------------------
+## Table S23 -----------------------------------------------------------------
 tbl_s20 <- df_by_experiment |>
   filter(Method == "MTT" | Method == "ALTMTT") |>
   filter(MA_Dist == "t") |>
@@ -3229,19 +3229,19 @@ tbl_s20 <- tbl_s20 |>
   hline(i = 5:6) |>
   set_header_labels(MetricShortName = "By experiment") |>
   add_footer_lines(value = as_paragraph(footer_text_tbl_s20)) |>
-  add_header_lines(values = paste0("Table S20 - Replication rates for MTT experiments using paired vs original (non-paired) analyses. ")) |>
+  add_header_lines(values = paste0("Table S23 - Replication rates for MTT experiments using paired vs original (non-paired) analyses. ")) |>
   bold(i = 2, part = "header") |>
   set_table_properties(layout = "autofit")
 
 ### Saving ----
 save_tbl(
   tbl_s20,
-  paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S20.docx")
+  paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S23.docx")
 )
-cat("\n### Table S20 generated! ###\n")
+cat("\n### Table S23 generated! ###\n")
 
 
-## Table S25 ---------------------------------------------------------------
+## Table S28 ---------------------------------------------------------------
 df_coord_difficulties <- read_excel("other-data/Coordinating team assessment of difficulties.xlsx") |>
   clean_names() |>
   select(categoria, dificuldade, soma_um)
@@ -3287,18 +3287,18 @@ tbl_s25 <- df_coord_difficulties |>
   rename(Difficulty = dificuldade) |>
   rename(Rating = soma) |>
   flextable() |>
-  add_name("Table S25 – Project difficulties - Coordinating team assessment") |>
+  add_name("Table S28 – Project difficulties - Coordinating team assessment") |>
   set_table_properties(layout = "autofit")
 
 ### Saving ----
 save_tbl(
   list(tbl_s25),
-  paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S25.docx")
+  paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S28.docx")
 )
 
-cat("\n### Table S25 generated! ###\n")
+cat("\n### Table S28 generated! ###\n")
 
-## Table S22 ---------------------------------------------------------------
+## Table S25 ---------------------------------------------------------------
 # Survey participant demographics
 
 ### Data loading and cleaning ----
@@ -3413,17 +3413,17 @@ tbl_s21_data <- all_summaries |>
 ### Create flextable ----
 tbl_s22 <- tbl_s21_data |>
   flextable() |>
-  add_header_lines(values = "Table S22 – Survey participant demographics") |>
+  add_header_lines(values = "Table S25 – Survey participant demographics") |>
   bold(i = 1, part = "header") |>
   set_table_properties(layout = "autofit")
 
 ### Saving ----
 save_tbl(
   list(tbl_s22),
-  paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S22.docx")
+  paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S25.docx")
 )
 
-cat("\n### Table S22 generated! ###\n")
+cat("\n### Table S25 generated! ###\n")
 
 ## Text-Cited Numbers ------------------------------------------------------
 
