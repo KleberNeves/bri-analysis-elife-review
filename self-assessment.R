@@ -287,10 +287,10 @@ bri_ggsave(
 )
 
 #---
-## Table S23 ----
+## Table S26 ----
 #---
 
-tbl_s23 <- cat_protocol |>
+tbl_s26 <- cat_protocol |>
   mutate(protocol_labels = protocol_labels_fig) |>
   slice(1:5) |>
   arrange(desc(category_counts)) |>
@@ -352,10 +352,10 @@ tbl_s23 <- cat_protocol |>
   add_footer_lines("Table shows the various categories and subcategories for protocol deviations (in order of general category frequency, as in Figure 5), with illustrative examples of lab responses for each subcategory.")
 
 save_tbl(
-  list(tbl_s23),
-  paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S23.docx")
+  list(tbl_s26),
+  paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S26.docx")
 )
-cat("\n### Table S23 generated! ###\n")
+cat("\n### Table S26 generated! ###\n")
 
 #---
 ## Plot 5 - Could the deviations have been prevented? ----
@@ -1225,7 +1225,7 @@ difficulties.labels.fig[["8"]] <- "Other"
 
 bri_ggsave(paste0(output_path, "/self-assessment/", "Figure S9.png"), plot = fig_s9, width = 20, height = 25, units = "cm")
 
-## Table S24 ---------------------------------------------------------------
+## Table S27 ---------------------------------------------------------------
 
 
 # Vector with the desired order. Note that strings that begin and end with "**"
@@ -1283,7 +1283,7 @@ final_tbl <- final_tbl |>
   )
 
 # Replace NA values in 'labels' with 'Label' and finalize the selection.
-tbl_s24 <- final_tbl |>
+tbl_s27 <- final_tbl |>
   mutate(labels = if_else(is.na(labels), Label, labels)) |>
   select(labels, Count) |>
   rename(Label = labels) |>
@@ -1291,13 +1291,13 @@ tbl_s24 <- final_tbl |>
   bold(i = c(1, 9, 18, 25, 30, 35, 38, 43)) |> 
   set_table_properties(layout = "autofit") |>
   add_name("Table - Examples of difficulties faced by labs replicating the experiments.") |>
-  add_footer_lines("Table shows the various categories and subcategories for general difficulties (in order of general category frequency, as in Figure S3), with illustrative examples of participant responses for each subcategory.")
+  add_footer_lines("Table shows the various categories and subcategories for general difficulties (in order of general category frequency, as in Figure S9), with illustrative examples of participant responses for each subcategory.")
 
 save_tbl(
-  list(tbl_s24),
-  paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S24.docx")
+  list(tbl_s27),
+  paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S27.docx")
 )
-cat("\n### Table S24 generated! ###\n")
+cat("\n### Table S27 generated! ###\n")
 
 ## Self-assessments ----
 
