@@ -1197,7 +1197,7 @@ df_assessment_by_experiment <- df_assessment_by_experiment |>
   )
 
 ratio_mean_absolute_diff_all <- df_assessment_by_experiment |>
-  filter(category != "ALTPCR") |>
+  filter(category %in% c("EPM","PCR","MTT"))|>
   summarise(
     median_range_median_mad_ratio = paste0(
       sprintf("%.2f", median(mad_ratio, na.rm = TRUE)),
@@ -3504,7 +3504,7 @@ for (i in 1:nrow(result_d)) {
 
 # e) Wilcoxon signed-rank test: mean_abs_diff_reps vs mean_abs_diff_reps_orig (excluding ALTPCR)
 result_e <- df_assessment_by_experiment |>
-  filter(!str_detect(EXP, "ALTPCR")) |>
+  filter(category %in% c("EPM","PCR","MTT")) |>
   summarise(
     p_value = wilcox.test(mean_abs_diff_reps, mean_abs_diff_reps_orig, paired = TRUE, na.action = na.omit)$p.value,
     statistic = wilcoxonZ(mean_abs_diff_reps, mean_abs_diff_reps_orig, paired = TRUE)
