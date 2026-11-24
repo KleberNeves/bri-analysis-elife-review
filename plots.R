@@ -2815,6 +2815,12 @@ plot_specification_curve <- function(results_path, include_method, suffix = "") 
         Level,
         "Set of replications" ~ "Aggregate of replications",
         .default = Level
+      ),
+      ES_Correction = case_match(
+        ES_Correction,
+        "Without correction" ~ "Without ES correction",
+        "With correction" ~ "With ES correction",
+        .default = ES_Correction
       )
     )
 
@@ -2855,9 +2861,9 @@ plot_specification_curve <- function(results_path, include_method, suffix = "") 
     metric_order <- metric_order[metric_order %in% unique(AGGDATA_TOG$Metric)]
     
     indiv_metric_order <- c(
-      "Subjectively replicated (Indiv)",
       "Replication in original CI (Indiv)",
-      "Same-sign significance (Indiv)"
+      "Same-sign significance (Indiv)",
+      "Subjectively replicated (Indiv)"
     )
     indiv_metric_order <- indiv_metric_order[indiv_metric_order %in% unique(AGGDATA_TOG$Metric)]
     
@@ -2877,7 +2883,7 @@ plot_specification_curve <- function(results_path, include_method, suffix = "") 
     )
     inclusion_order <- inclusion_order[inclusion_order %in% inclusion_levels]
     
-    es_correction_levels <- c("Without correction", "With correction")
+    es_correction_levels <- c("Without ES correction", "With ES correction")
     es_correction_order <- es_correction_levels[es_correction_levels %in% unique(AGGDATA_TOG$ES_Correction)]
 
     ma_dist_order <- c(
@@ -2954,9 +2960,9 @@ plot_specification_curve <- function(results_path, include_method, suffix = "") 
     metric_order <- metric_order[metric_order %in% unique(AGGDATA_TOG$Metric)]
     
     indiv_metric_order <- c(
-      "Subjectively replicated (Indiv)",
       "Replication in original CI (Indiv)",
-      "Same-sign significance (Indiv)"
+      "Same-sign significance (Indiv)",
+      "Subjectively replicated (Indiv)"
     )
     indiv_metric_order <- indiv_metric_order[indiv_metric_order %in% unique(AGGDATA_TOG$Metric)]
     
@@ -2979,7 +2985,7 @@ plot_specification_curve <- function(results_path, include_method, suffix = "") 
     pcr_order <- c("PCR (log)", "PCR (linear)")
     mtt_order <- c("MTT (paired)", "MTT (original)")
     
-    es_correction_levels <- c("Without correction", "With correction")
+    es_correction_levels <- c("Without ES correction", "With ES correction")
     es_correction_order <- es_correction_levels[es_correction_levels %in% unique(AGGDATA_TOG$ES_Correction)]
 
     ma_dist_order <- c(
