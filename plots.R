@@ -3054,7 +3054,7 @@ plot_specification_curve <- function(results_path, include_method, suffix = "") 
       geom = "text", x = 2, y = quartiles[3] + 0.1,
       label = paste0("Median: ", quartiles[2] * 100, "%\nIQR: [", quartiles[1] * 100, "%, ", quartiles[3] * 100, "%]"), hjust = 0
     ) +
-    labs(x = "", y = "Reproducibility Rate") +
+    labs(x = "", y = "Replication Rate") +
     scale_y_continuous(limits = c(0, 1), breaks = c(0, 0.25, 0.5, 0.75, 1), labels = scales::label_percent()) + 
     theme_minimal() +
     theme(
