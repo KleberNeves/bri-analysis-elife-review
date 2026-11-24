@@ -79,11 +79,13 @@ for (i in seq_along(standalone)) {
 }
 
 mapping <- read_excel("other-data/Manuscript Figure Correspondence.xlsx")
-s10 <- filter(mapping, type == "figure", manuscript_name == "S10")
-stopifnot(nrow(s10) == 1L,
-  identical(s10$code_generated_filename,
-    "/original-error-bar-regression/original-study-log-sd-vs-log-mean.png"))
-manuscript_dir <- file.path(output_root, "_manuscript figures and tables/manuscript")
-dir.create(manuscript_dir, recursive = TRUE, showWarnings = FALSE)
-stopifnot(file.copy(result$figure_path, file.path(manuscript_dir, "Figure_S10.png"), overwrite = TRUE))
-cat("PASS: S3 article counts and maps; S4 labels; S10 counts, exclusions, natural-log equivalence, legends and registration\n")
+# The SD-vs-mean figure is not cited in the manuscript, so it is exported unnumbered.
+sd_mean <- filter(mapping,
+  code_generated_filename == "/original-error-bar-regression/original-study-log-sd-vs-log-mean.png")
+stopifnot(nrow(sd_mean) == 1L, identical(sd_mean$type, "other figure"),
+  !grepl("^S?\\d+$", sd_mean$manuscript_name))
+other_fig_dir <- file.path(output_root, "_manuscript figures and tables/other figures")
+dir.create(other_fig_dir, recursive = TRUE, showWarnings = FALSE)
+stopifnot(file.copy(result$figure_path,
+  file.path(other_fig_dir, paste0(sd_mean$manuscript_name, ".png")), overwrite = TRUE))
+cat("PASS: S3 article counts and maps; S4 labels; original SD-vs-mean figure counts, exclusions, natural-log equivalence, legends and unnumbered registration\n")

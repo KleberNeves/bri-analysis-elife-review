@@ -17,86 +17,83 @@ format_frequency <- function(x, n) {
 
 ## Replication Rates -------------------------------------------------------
 
-df_replication_rate <- read_tsv(paste0("output/", results_path, "/Replication Rate Aggregate.tsv"), show_col_types = FALSE)
-if ("ES_Correction" %in% names(df_replication_rate)) {
-  df_replication_rate <- df_replication_rate |> filter(ES_Correction == "Without correction")
-}
-df_replication_rate <- df_replication_rate |>
-  mutate(MetricShortName = case_when(
-    MetricShortName == "Same-sign significance (p<0.05)" ~ "FEMA is significant and has same signal as original",
-    MetricShortName == "Original in replication 95% PI" ~ "Original estimate within PI of REMA",
-    MetricShortName == "Replication in original 95% CI" & Level == "Set of replications" ~ "REMA estimate within CI of Original",
-    MetricShortName == "≥50% subjectively replicated" ~ "Subjective assessment majority vote (with ties as success)",
-    MetricShortName == "≥50% significant" ~ "t-test majority vote (with ties as success)",
-    MetricShortName == "Subjectively replicated (Indiv)" ~ "Subjective assessment, individual",
-    MetricShortName == "Replication in original CI (Indiv)" & Level == "Individual replication" ~ "Replication estimate within CI of Original",
-    MetricShortName == "Same-sign significance (Indiv)" ~ "Replication is significant and has same sign as original",
-    .default = MetricShortName
-  )) |>
-  filter(
-    ## By experiment
-    MetricShortName == "FEMA is significant and has same signal as original" |
-      MetricShortName == "Original estimate within PI of REMA" |
-      MetricShortName == "REMA estimate within CI of Original" |
-      MetricShortName == "Subjective assessment majority vote (with ties as success)" |
-      MetricShortName == "t-test majority vote (with ties as success)" |
-      ## By replication
-      MetricShortName == "Subjective assessment, individual" |
-      MetricShortName == "Replication estimate within CI of Original" |
-      MetricShortName == "Replication is significant and has same sign as original"
+# Builds the by-experiment and by-replication rate tables for one effect size
+# convention. es_correction selects the "Without correction" (main tables) or
+# "With correction" (small-sample corrected ratio of means, Tables S20-S22) runs.
+build_rate_dfs <- function(es_correction = "Without correction") {
+  df_replication_rate <- read_tsv(paste0("output/", results_path, "/Replication Rate Aggregate.tsv"), show_col_types = FALSE)
+  if ("ES_Correction" %in% names(df_replication_rate)) {
+    df_replication_rate <- df_replication_rate |> filter(ES_Correction == es_correction)
+  }
+  df_replication_rate <- df_replication_rate |>
+    mutate(MetricShortName = case_when(
+      MetricShortName == "Same-sign significance (p<0.05)" ~ "FEMA is significant and has same signal as original",
+      MetricShortName == "Original in replication 95% PI" ~ "Original estimate within PI of REMA",
+      MetricShortName == "Replication in original 95% CI" & Level == "Set of replications" ~ "REMA estimate within CI of Original",
+      MetricShortName == "≥50% subjectively replicated" ~ "Subjective assessment majority vote (with ties as success)",
+      MetricShortName == "≥50% significant" ~ "t-test majority vote (with ties as success)",
+      MetricShortName == "Subjectively replicated (Indiv)" ~ "Subjective assessment, individual",
+      MetricShortName == "Replication in original CI (Indiv)" & Level == "Individual replication" ~ "Replication estimate within CI of Original",
+      MetricShortName == "Same-sign significance (Indiv)" ~ "Replication is significant and has same sign as original",
+      .default = MetricShortName
+    ))
+
+  ### By experiment -----------------------------------------------------------
+  desired_order_exp <- c(
+    "Original estimate within PI of REMA",
+    "REMA estimate within CI of Original",
+    "FEMA is significant and has same signal as original",
+    "t-test majority vote (with ties as success)",
+    "Subjective assessment majority vote (with ties as success)"
   )
 
+  df_by_experiment <- df_replication_rate |>
+    filter(MetricShortName %in% desired_order_exp) |>
+    mutate(Value = paste0(round(Value * 100, 2), "%")) |>
+    mutate(MetricShortName = factor(MetricShortName, levels = desired_order_exp)) |>
+    arrange(MetricShortName)
 
-### By experiment -----------------------------------------------------------
-desired_order_exp <- c(
-  "Original estimate within PI of REMA",
-  "REMA estimate within CI of Original",
-  "FEMA is significant and has same signal as original",
-  "t-test majority vote (with ties as success)",
-  "Subjective assessment majority vote (with ties as success)"
-)
+  ### By replication ----------------------------------------------------------
+  desired_order_rep <- c(
+    "Replication estimate within CI of Original",
+    "Replication is significant and has same sign as original",
+    "Subjective assessment, individual"
+  )
 
-df_by_experiment <- df_replication_rate |>
-  filter(
-    ## By experiment
-    MetricShortName == "FEMA is significant and has same signal as original" |
-      MetricShortName == "Original estimate within PI of REMA" |
-      MetricShortName == "REMA estimate within CI of Original" |
-      MetricShortName == "Subjective assessment majority vote (with ties as success)" |
-      MetricShortName == "t-test majority vote (with ties as success)"
-  ) |>
-  mutate(Value = paste0(round(Value * 100, 2), "%")) |>
-  mutate(MetricShortName = factor(MetricShortName, levels = desired_order_exp)) |>
-  arrange(MetricShortName)
+  df_by_replication <- df_replication_rate |>
+    filter(MetricShortName %in% desired_order_rep) |>
+    mutate(Value = paste0(round(Value * 100, 2), "%")) |>
+    mutate(MetricShortName = factor(MetricShortName, levels = desired_order_rep)) |>
+    arrange(MetricShortName)
 
+  list(by_experiment = df_by_experiment, by_replication = df_by_replication)
+}
 
+rate_dfs <- build_rate_dfs("Without correction")
+df_by_experiment <- rate_dfs$by_experiment
+df_by_replication <- rate_dfs$by_replication
 
-### By replication ----------------------------------------------------------
-desired_order_rep <- c(
-  "Replication estimate within CI of Original",
-  "Replication is significant and has same sign as original",
-  "Subjective assessment, individual"
-)
-
-df_by_replication <- df_replication_rate |>
-  filter(
-    ## By replication
-    MetricShortName == "Subjective assessment, individual" |
-      MetricShortName == "Replication estimate within CI of Original" |
-      MetricShortName == "Replication is significant and has same sign as original"
-  ) |>
-  mutate(Value = paste0(round(Value * 100, 2), "%")) |>
-  mutate(MetricShortName = factor(MetricShortName, levels = desired_order_rep)) |>
-  arrange(MetricShortName)
+rate_dfs_corr <- build_rate_dfs("With correction")
+df_by_experiment_corr <- rate_dfs_corr$by_experiment
+df_by_replication_corr <- rate_dfs_corr$by_replication
 
 ### Functions ----
 
-create_tbl_by_method_pcr <- function(analysis_type, distribution) {
+# exp_df/rep_df default to the main (uncorrected) rate tables. When caption is
+# given (an as_paragraph() object), it replaces the generic header and footer.
+create_tbl_by_method_pcr <- function(
+  analysis_type,
+  distribution,
+  exp_df = df_by_experiment,
+  rep_df = df_by_replication,
+  caption = NULL,
+  all_label = "ALL"
+) {
   # Ensure that distribution is in lowercase
   distribution <- tolower(distribution)
 
   # Build wide tables and avoid relying on column order
-  exp_wide <- df_by_experiment |>
+  exp_wide <- exp_df |>
     filter(Inclusion_Set == analysis_type) |>
     filter(Method != "ALL_ALTPCR" & Method != "ALL_ALTMTT" & Method != "ALL_ALTPCR_ALTMTT" & Method != "ALTMTT") |>
     filter(MA_Dist == distribution) |>
@@ -104,7 +101,7 @@ create_tbl_by_method_pcr <- function(analysis_type, distribution) {
     select(MetricShortName, Method, Value_Denominator) |>
     pivot_wider(names_from = Method, values_from = Value_Denominator)
 
-  rep_wide <- df_by_replication |>
+  rep_wide <- rep_df |>
     filter(Method != "ALL_ALTPCR" & Method != "ALL_ALTMTT" & Method != "ALL_ALTPCR_ALTMTT" & Method != "ALTMTT") |>
     filter(Inclusion_Set == analysis_type) |>
     filter(MA_Dist == distribution) |>
@@ -115,7 +112,7 @@ create_tbl_by_method_pcr <- function(analysis_type, distribution) {
   # For bigexp distribution, add missing rows for commensurability with other tables
   if (distribution == "bigexp") {
     # Get data from t distribution for missing metrics
-    exp_wide_t <- df_by_experiment |>
+    exp_wide_t <- exp_df |>
       filter(Inclusion_Set == analysis_type) |>
       filter(Method != "ALL_ALTPCR" & Method != "ALL_ALTMTT" & Method != "ALL_ALTPCR_ALTMTT" & Method != "ALTMTT") |>
       filter(MA_Dist == "t") |>
@@ -123,7 +120,7 @@ create_tbl_by_method_pcr <- function(analysis_type, distribution) {
       select(MetricShortName, Method, Value_Denominator) |>
       pivot_wider(names_from = Method, values_from = Value_Denominator)
     
-    rep_wide_t <- df_by_replication |>
+    rep_wide_t <- rep_df |>
       filter(Method != "ALL_ALTPCR" & Method != "ALL_ALTMTT" & Method != "ALL_ALTPCR_ALTMTT" & Method != "ALTMTT") |>
       filter(Inclusion_Set == analysis_type) |>
       filter(MA_Dist == "t") |>
@@ -206,9 +203,9 @@ create_tbl_by_method_pcr <- function(analysis_type, distribution) {
 
   # Header rows carrying column names (ensures no NA/"" in names)
   header_exp <- tibble(MetricShortName = "By experiment")
-  for (m in present_methods) header_exp[[m]] <- ifelse(m == "ALL_PCR_MTT", "ALL", m)
+  for (m in present_methods) header_exp[[m]] <- ifelse(m == "ALL_PCR_MTT", all_label, m)
   header_rep <- tibble(MetricShortName = "By replication")
-  for (m in present_methods) header_rep[[m]] <- ifelse(m == "ALL_PCR_MTT", "ALL", m)
+  for (m in present_methods) header_rep[[m]] <- ifelse(m == "ALL_PCR_MTT", all_label, m)
 
   # Combine in desired order
   tbl_by_method_all_exps <- bind_rows(
@@ -242,10 +239,21 @@ create_tbl_by_method_pcr <- function(analysis_type, distribution) {
     flextable() |>
     bold(j = 2) |>
     bold(i = 6) |>
-    hline(i = 5:6) |>
-    add_footer_lines(value = as_paragraph(footer_text)) |>
-    add_header_lines(values = paste0("Table S - Replication Rates - ", analysis_type, " - dist ", toupper(distribution))) |>
-    bold(i = 2, part = "header") |>
+    hline(i = 5:6)
+
+  if (is.null(caption)) {
+    tbl_by_method_all_exps <- tbl_by_method_all_exps |>
+      add_footer_lines(value = as_paragraph(footer_text)) |>
+      add_header_lines(values = paste0("Table S - Replication Rates - ", analysis_type, " - dist ", toupper(distribution))) |>
+      bold(i = 2, part = "header")
+  } else {
+    tbl_by_method_all_exps <- tbl_by_method_all_exps |>
+      add_footer_lines(value = caption) |>
+      align(align = "justify", part = "footer") |>
+      bold(i = 1, part = "header")
+  }
+
+  tbl_by_method_all_exps <- tbl_by_method_all_exps |>
     set_table_properties(layout = "autofit")
 
   return(tbl_by_method_all_exps)
@@ -742,87 +750,111 @@ if (length(existing_tables_bigexp_altpcr) > 0) {
 }
 
 ## Table 2 -----------------------------------------------------
-tbl_2 <- df_by_experiment |>
-  filter(Method == "ALL_PCR_MTT") |>
-  filter(MA_Dist == "t") |>
-  mutate(Value_Denominator = paste0(round(successful), "/", N, " (", Value, ")")) |>
-  select(MetricShortName, Method, Value_Denominator, Inclusion_Set) |>
-  pivot_wider(names_from = c(Inclusion_Set, Method), values_from = Value_Denominator) |>
-  add_row(
-    data.frame(
-      MetricShortName = "By experiment"
-    ),
-    .before = 0
-  ) |>
-  add_row(
-    df_by_replication |>
-      filter(Method == "ALL_PCR_MTT") |>
-      filter(MA_Dist == "t") |>
-      mutate(Value_Denominator = paste0(round(successful), "/", N, " (", Value, ")")) |>
-      select(MetricShortName, Method, Value_Denominator, Inclusion_Set) |>
-      pivot_wider(names_from = c(Inclusion_Set, Method), values_from = Value_Denominator) |>
-      add_row(
-        data.frame(
-          MetricShortName = "By replication"
-        ),
-        .before = 0
-      )
-  ) |>
-  mutate(
-    MetricShortName = case_when(
-      MetricShortName == "FEMA is significant and has same signal as original" ~ "Same-sign significance (p<0.05)",
-      MetricShortName == "Original estimate within PI of REMA" ~ "Original in replication’s 95% PI",
-      MetricShortName == "REMA estimate within CI of Original" ~ "Replication in original 95% CI",
-      MetricShortName == "Subjective assessment majority vote (with ties as success)" ~ "≥50% subjectively replicated",
-      MetricShortName == "t-test majority vote (with ties as success)" ~ "≥50% replications significant",
-      MetricShortName == "Subjective assessment, individual" ~ "Subjectively replicated",
-      MetricShortName == "Replication estimate within CI of Original" ~ "Replication in original 95% CI",
-      MetricShortName == "Replication is significant and has same sign as original" ~ "Same-sign significance (p<0.05)",
-      TRUE ~ MetricShortName
-    )
-  ) |>
-  slice(1:7, 8, 9, 10)
-
-ordered_cols_tbl_2 <- tibble(
-  colname = colnames(tbl_2),
-  priority = case_when(
-    str_starts(colname, "MetricShortName") ~ 1,
-    str_starts(colname, "primary") ~ 2,
-    str_starts(colname, "included_by_lab") ~ 3,
-    str_starts(colname, "all_exps_lab_units") ~ 4,
-    str_starts(colname, "at_least_2_reps") ~ 5,
-    str_starts(colname, "only_3_reps") ~ 6,
-    str_starts(colname, "only_80_power_a_posteriori") ~ 7,
-    TRUE ~ 8
-  )
-) |>
-  arrange(priority) |>
-  pull(colname)
-
-tbl_2 <- tbl_2 |>
-  select(any_of(ordered_cols_tbl_2)) |>
-  dplyr::rename(any_of(c(
+# Replication rates (ALL_PCR_MTT, t distribution) across analysis sets.
+# exp_df/rep_df select the effect size convention (Table 2 vs. Table S21);
+# col_labels maps output labels to set columns; caption (an as_paragraph()
+# object) replaces the generic header and footer when given.
+build_tbl_2 <- function(
+  exp_df = df_by_experiment,
+  rep_df = df_by_replication,
+  col_labels = c(
     `Primary` = "primary_ALL_PCR_MTT",
     `Lab's choice` = "included_by_lab_ALL_PCR_MTT",
     `All Exps` = "all_exps_lab_units_ALL_PCR_MTT",
     `≥ 2 copies` = "at_least_2_reps_ALL_PCR_MTT",
     `3 copies` = "only_3_reps_ALL_PCR_MTT",
     `≥80% power` = "only_80_power_a_posteriori_T_ALL_PCR_MTT"
-  )))
+  ),
+  caption = NULL
+) {
+  tbl_2 <- exp_df |>
+    filter(Method == "ALL_PCR_MTT") |>
+    filter(MA_Dist == "t") |>
+    mutate(Value_Denominator = paste0(round(successful), "/", N, " (", Value, ")")) |>
+    select(MetricShortName, Method, Value_Denominator, Inclusion_Set) |>
+    pivot_wider(names_from = c(Inclusion_Set, Method), values_from = Value_Denominator) |>
+    add_row(
+      data.frame(
+        MetricShortName = "By experiment"
+      ),
+      .before = 0
+    ) |>
+    add_row(
+      rep_df |>
+        filter(Method == "ALL_PCR_MTT") |>
+        filter(MA_Dist == "t") |>
+        mutate(Value_Denominator = paste0(round(successful), "/", N, " (", Value, ")")) |>
+        select(MetricShortName, Method, Value_Denominator, Inclusion_Set) |>
+        pivot_wider(names_from = c(Inclusion_Set, Method), values_from = Value_Denominator) |>
+        add_row(
+          data.frame(
+            MetricShortName = "By replication"
+          ),
+          .before = 0
+        )
+    ) |>
+    mutate(
+      MetricShortName = case_when(
+        MetricShortName == "FEMA is significant and has same signal as original" ~ "Same-sign significance (p<0.05)",
+        MetricShortName == "Original estimate within PI of REMA" ~ "Original in replication’s 95% PI",
+        MetricShortName == "REMA estimate within CI of Original" ~ "Replication in original 95% CI",
+        MetricShortName == "Subjective assessment majority vote (with ties as success)" ~ "≥50% subjectively replicated",
+        MetricShortName == "t-test majority vote (with ties as success)" ~ "≥50% replications significant",
+        MetricShortName == "Subjective assessment, individual" ~ "Subjectively replicated",
+        MetricShortName == "Replication estimate within CI of Original" ~ "Replication in original 95% CI",
+        MetricShortName == "Replication is significant and has same sign as original" ~ "Same-sign significance (p<0.05)",
+        TRUE ~ MetricShortName
+      )
+    ) |>
+    slice(1:7, 8, 9, 10)
 
-footer_text_tbl_2 <- "Replication rates for the primary and secondary analyses. Effect size comparisons are based on random-effects meta-analysis, while same-sign significance is based on a fixed meta-analysis estimate. The prediction interval criterion only uses experiments with more than one replication. Subsets for secondary analyses include all experiments judged valid by the replicating lab (Lab’s Choice), all concluded experiments (All Exps), both of which use the experimental unit as defined by the lab, only experiments with at least 2 and 3 replications, and only experiments with ≥ 80% a posteriori power. All statistical tests use the t distribution. PI, prediction interval; CI, confidence interval. For more information on replication criteria, see https://osf.io/9rnuj."
+  ordered_cols_tbl_2 <- tibble(
+    colname = colnames(tbl_2),
+    priority = case_when(
+      str_starts(colname, "MetricShortName") ~ 1,
+      str_starts(colname, "primary") ~ 2,
+      str_starts(colname, "included_by_lab") ~ 3,
+      str_starts(colname, "all_exps_lab_units") ~ 4,
+      str_starts(colname, "at_least_2_reps") ~ 5,
+      str_starts(colname, "only_3_reps") ~ 6,
+      str_starts(colname, "only_80_power_a_posteriori") ~ 7,
+      TRUE ~ 8
+    )
+  ) |>
+    arrange(priority) |>
+    pull(colname)
 
-tbl_2 <- tbl_2 |>
-  slice(-1) |>
-  flextable() |>
-  bold(j = 2) |>
-  bold(i = 6) |>
-  hline(i = 5:6) |>
-  set_header_labels(MetricShortName = "By experiment") |>
-  add_footer_lines(value = as_paragraph(footer_text_tbl_2)) |>
-  add_header_lines(values = paste0("Table 2 - Replication rates for different analysis sets.")) |>
-  bold(i = 2, part = "header") |>
-  set_table_properties(layout = "autofit")
+  tbl_2 <- tbl_2 |>
+    select(any_of(ordered_cols_tbl_2)) |>
+    dplyr::rename(any_of(col_labels))
+
+  footer_text_tbl_2 <- "Replication rates for the primary and secondary analyses. Effect size comparisons are based on random-effects meta-analysis, while same-sign significance is based on a fixed meta-analysis estimate. The prediction interval criterion only uses experiments with more than one replication. Subsets for secondary analyses include all experiments judged valid by the replicating lab (Lab’s Choice), all concluded experiments (All Exps), both of which use the experimental unit as defined by the lab, only experiments with at least 2 and 3 replications, and only experiments with ≥ 80% a posteriori power. All statistical tests use the t distribution. PI, prediction interval; CI, confidence interval. For more information on replication criteria, see https://osf.io/9rnuj."
+
+  tbl_2 <- tbl_2 |>
+    slice(-1) |>
+    flextable() |>
+    bold(j = 2) |>
+    bold(i = 6) |>
+    hline(i = 5:6) |>
+    set_header_labels(MetricShortName = "By experiment")
+
+  if (is.null(caption)) {
+    tbl_2 <- tbl_2 |>
+      add_footer_lines(value = as_paragraph(footer_text_tbl_2)) |>
+      add_header_lines(values = paste0("Table 2 - Replication rates for different analysis sets.")) |>
+      bold(i = 2, part = "header")
+  } else {
+    tbl_2 <- tbl_2 |>
+      add_footer_lines(value = caption) |>
+      align(align = "justify", part = "footer") |>
+      bold(i = 1, part = "header")
+  }
+
+  tbl_2 |>
+    set_table_properties(layout = "autofit")
+}
+
+tbl_2 <- build_tbl_2()
 
 save_tbl(
   tbl_2,
@@ -1165,7 +1197,7 @@ df_assessment_by_experiment <- df_assessment_by_experiment |>
   )
 
 ratio_mean_absolute_diff_all <- df_assessment_by_experiment |>
-  filter(category != "ALTPCR") |>
+  filter(category %in% c("EPM","PCR","MTT"))|>
   summarise(
     median_range_median_mad_ratio = paste0(
       sprintf("%.2f", median(mad_ratio, na.rm = TRUE)),
@@ -1428,6 +1460,200 @@ save_tbl(
 
 cat("\n### Table 3 generated! ###\n")
 
+## Tables S20-S22 (small-sample corrected ratio of means) -----------------
+# Same as Tables 1, 2 and 3, but using the "es_corrected" analyses, in which
+# ratio-of-means effect sizes use the small-sample correction of Lajeunesse
+# (2015). This requires metafor >= 5.0-1: older versions ignore `correct` for
+# ROM/ROMC and would silently reproduce Tables 1-3.
+
+osf_criteria_link <- hyperlink_text("https://osf.io/9rnuj", url = "https://osf.io/9rnuj")
+
+### Table S20 ----
+
+caption_tbl_s20 <- as_paragraph(
+  as_b("Table S20. Replication rates in the primary analysis using small-sample correction for effect sizes."),
+  " Replication rates for the primary analysis using multiple criteria for experiments (based on the aggregate of replications) and individual replications. Results are the same as in ",
+  as_b("Table 1"),
+  ", but calculating ratio-of-means effect sizes using small-sample correction (Lajeunesse, 2015). Effect size comparisons are based on random-effects meta-analyses, while same-sign significance is based on fixed-effects meta-analysis estimates. The 95% prediction interval criterion only uses experiments with more than one replication and thus has a different sample size. All statistical tests use t distributions based on the number of experimental units. PI, prediction interval; CI, confidence interval; MTT, 3-[4,5-dimethylthiazol-2-yl]-2,5 diphenyl tetrazolium bromide assay; PCR, reverse transcription polymerase chain reaction; EPM, elevated plus maze. For more information on replication criteria, see ",
+  osf_criteria_link,
+  "."
+)
+
+tbl_s20_es_corr <- create_tbl_by_method_pcr(
+  "primary",
+  "t",
+  exp_df = df_by_experiment_corr,
+  rep_df = df_by_replication_corr,
+  caption = caption_tbl_s20,
+  all_label = "All"
+)
+
+save_tbl(
+  list(tbl_s20_es_corr),
+  paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S20.docx")
+)
+cat("\n### Table S20 generated! ###\n")
+
+### Table S21 ----
+
+caption_tbl_s21 <- as_paragraph(
+  as_b("Table S21. Replication rates for different analysis sets using small-sample correction for effect sizes."),
+  " Replication rates for the primary and secondary analyses using multiple criteria for experiments (based on the aggregate of replications) and individual replications. Results are the same as in ",
+  as_b("Table 2"),
+  ", but calculating ratio-of-means effect sizes using small-sample correction (Lajeunesse, 2015). Effect size comparisons are based on random-effects meta-analysis, while same-sign significance is based on a fixed meta-analysis estimate. The 95% prediction interval criterion only uses experiments with more than one replication and thus has a different sample size. Subsets for secondary analyses include all experiments judged valid by the replicating lab (Lab’s Choice), all concluded experiments (All Exps) – both of which use the experimental unit as defined by the lab rather than by the validation committee –, only experiments with at least 2 (≥ 2 Reps) and 3 replications (3 Reps), and only experiments with ≥ 80% ",
+  as_i("a posteriori"),
+  " power using the original relative difference and the variability achieved in replications. All statistical tests use t distributions based on the number of experimental units. PI, prediction interval; CI, confidence interval. For more information on replication criteria, see ",
+  osf_criteria_link,
+  "."
+)
+
+tbl_s21_es_corr <- build_tbl_2(
+  exp_df = df_by_experiment_corr,
+  rep_df = df_by_replication_corr,
+  col_labels = c(
+    `Primary` = "primary_ALL_PCR_MTT",
+    `Lab’s choice` = "included_by_lab_ALL_PCR_MTT",
+    `All Exps` = "all_exps_lab_units_ALL_PCR_MTT",
+    `≥ 2 Reps` = "at_least_2_reps_ALL_PCR_MTT",
+    `3 Reps` = "only_3_reps_ALL_PCR_MTT",
+    `≥80% power` = "only_80_power_a_posteriori_T_ALL_PCR_MTT"
+  ),
+  caption = caption_tbl_s21
+)
+
+save_tbl(
+  tbl_s21_es_corr,
+  paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S21.docx")
+)
+cat("\n### Table S21 generated! ###\n")
+
+### Table S22 ----
+# Table 3 rows that depend on effect sizes (coefficient of variation rows are
+# left out, as they do not change with the effect size correction). Same
+# definitions as in Table 3, restricted to the EPM/PCR/MTT experiments.
+
+format_es_value <- function(x) {
+  if (is.na(x)) {
+    return("NA")
+  }
+  if (abs(x) >= 1e4) {
+    expo <- floor(log10(abs(x)))
+    mant <- round(x / 10^expo, 1)
+    sup <- c("⁰", "¹", "²", "³", "⁴", "⁵", "⁶", "⁷", "⁸", "⁹")
+    expo_chr <- paste(sup[as.integer(strsplit(as.character(expo), "")[[1]]) + 1], collapse = "")
+    return(paste0(format(mant, nsmall = 0), "x10", expo_chr))
+  }
+  if (abs(x) >= 10) sprintf("%.1f", x) else sprintf("%.2f", x)
+}
+
+format_median_range <- function(x) {
+  x <- x[!is.na(x)]
+  if (length(x) == 0) {
+    return("NA")
+  }
+  paste0(
+    format_es_value(median(x)),
+    "\n(",
+    format_es_value(min(x)),
+    " - ",
+    format_es_value(max(x)),
+    ")"
+  )
+}
+
+build_tbl_es_comparisons <- function(analysis_folder) {
+  add_category <- function(df) {
+    df |>
+      mutate(category = case_when(
+        str_detect(EXP, "ALTPCR") ~ "ALTPCR",
+        str_detect(EXP, "ALTMTT") ~ "ALTMTT",
+        str_detect(EXP, "EPM") ~ "EPM",
+        str_detect(EXP, "PCR") ~ "PCR",
+        str_detect(EXP, "^MTT") ~ "MTT"
+      )) |>
+      filter(category %in% c("MTT", "PCR", "EPM"))
+  }
+
+  assessment <- read_tsv(
+    paste0("output/", results_path, "/", analysis_folder, "/Replication Assessment by Experiment.tsv"),
+    show_col_types = FALSE
+  ) |>
+    add_category() |>
+    mutate(
+      original_es_linear = exp(corrected_sign_original_es),
+      replication_es_linear = exp(corrected_sign_replication_es),
+      mean_abs_diff_reps_orig_linear = exp(mean_abs_diff_reps_orig),
+      mean_abs_diff_reps_linear = exp(mean_abs_diff_reps),
+      mad_ratio = ifelse(mean_abs_diff_reps == 0, NA, exp(mean_abs_diff_reps_orig - mean_abs_diff_reps)),
+      opposite_sign = (original_es > 0 & replication_es < 0) | (original_es < 0 & replication_es > 0)
+    )
+
+  success <- read_tsv(
+    paste0("output/", results_path, "/", analysis_folder, "/Replication Success by Experiment.tsv"),
+    show_col_types = FALSE
+  ) |>
+    add_category()
+
+  groups <- c("All", "MTT", "PCR", "EPM")
+  subset_group <- function(df, g) if (g == "All") df else df |> filter(category == g)
+
+  summarise_group <- function(g) {
+    a <- subset_group(assessment, g)
+    s <- subset_group(success, g)
+    c(
+      format_median_range(a$original_es_linear),
+      format_median_range(a$replication_es_linear),
+      format_median_range(a$es_ratio),
+      format_median_range(a$mean_abs_diff_reps_orig_linear),
+      format_median_range(a$mean_abs_diff_reps_linear),
+      format_median_range(a$mad_ratio),
+      format_frequency(sum(s$SignalErrorAll, na.rm = TRUE), nrow(s)),
+      format_frequency(sum(a$opposite_sign, na.rm = TRUE), nrow(a))
+    )
+  }
+
+  tbl <- tibble(
+    `By experiment` = c(
+      "Original effect size\n(ratio of means)",
+      "Replication effect size\n(ratio of means)",
+      "Effect size ratio\n(original/replication)",
+      "Mean effect size difference\n(original vs. replications)",
+      "Mean effect size difference\n(between replications)",
+      "Ratio of mean ES differences\n(orig-rep/rep-rep)",
+      "Sign error (% of total)",
+      "Opposite sign (total)"
+    )
+  )
+  for (g in groups) tbl[[g]] <- summarise_group(g)
+
+  n_by_group <- sapply(groups, function(g) n_distinct(subset_group(assessment, g)$EXP))
+  colnames(tbl) <- c("By experiment", paste0(groups, "\n(n=", n_by_group, ")"))
+
+  tbl
+}
+
+caption_tbl_s22 <- as_paragraph(
+  as_b("Table S22. Comparisons between replication and original results in the primary analysis using small-sample correction"),
+  ". Results are the same as in ",
+  as_b("Table 3"),
+  ", but calculating ratio of mean effect sizes using small sample correction (Lajeunesse, 2015) (and excluding coefficient of variation comparisons, which are unchanged by this approach). Continuous variables are shown as median (range), while categorical ones are shown as proportion (percentage). Original effect sizes represent the ratio between the higher and lower mean of the two groups in the original study and are thus always above 1. Replication results respect the same order as the original: therefore, effects above 1 are in the same direction, and those below 1 are in the opposite direction. Ratios between original and replication effect sizes are thus ratios between ratios and are calculated by exponentiating differences between log ratios. Mean effect size differences are obtained from absolute differences between effect sizes in log ratio of means, in order to measure discrepancies between the original experiment and its replications or between individual replications. These are also exponentiated and thus represent the mean ratio between the higher and lower value. Sign errors refer to effects in the opposite direction of the original with p < 0.05, while opposite sign (total) includes all differences in the opposite direction (irrespective of significance). All results use the primary analysis set and t distributions based on the number of experimental units. ES, effect size; MTT, 3-[4,5-dimethylthiazol-2-yl]-2,5 diphenyl tetrazolium bromide assay; PCR, reverse transcription polymerase chain reaction; EPM, elevated plus maze."
+)
+
+tbl_s22_es_corr <- build_tbl_es_comparisons("primary t es_corrected") |>
+  flextable() |>
+  bold(j = 2) |>
+  bold(part = "header") |>
+  align(align = "center", part = "all", j = 2:5) |>
+  add_footer_lines(value = caption_tbl_s22) |>
+  align(align = "justify", part = "footer") |>
+  set_table_properties(layout = "autofit")
+
+save_tbl(
+  list(tbl_s22_es_corr),
+  paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S22.docx")
+)
+cat("\n### Table S22 generated! ###\n")
+
 ## Table S1 ----------------------------------------------------------------
 
 df_registered <- read_excel("other-data/intermediate_steps.xlsx", 1) |>
@@ -1510,18 +1736,17 @@ cat("\n### Table S1 generated! ###\n")
 
 ## Table S2 ----------------------------------------------------------------
 theme_gtsummary_language(language = "en", big.mark = "")
-
+reference_year <- 2025
 df_authorship_list <- read_excel("other-data/authorship_list.xlsx") |> clean_names()
 
 df_authorship_list <- df_authorship_list |>
   dplyr::distinct(author, .keep_all = T) |> 
   mutate(year_first_paper = as.numeric(year_first_paper)) |>
-  mutate(highest_degree = factor(highest_degree, labels = c("Doctorate", "High School", "Undergraduate Degree", "Master's Degree"))) |>
+  mutate(highest_degree = factor(highest_degree, levels = c("Doctorate", "Master's Degree", "Undergraduate Degree", "High School"))) |>
   mutate(ruf2023 = as.numeric(ruf2023)) |>
   mutate(geographic_region = if_else(geographic_region == "?", NA, geographic_region)) |>
   mutate(geographic_region = factor(geographic_region, labels = c("Center-West", "Northeast", "Southeast", "South"))) |>
-  mutate(today_date = ymd(today())) |>
-  mutate(years_since_first_paper = year(today_date) - year_first_paper) |>
+  mutate(years_since_first_paper = reference_year - year_first_paper) |>
   mutate(years_since_first_paper = if_else(is.na(years_since_first_paper), 0, years_since_first_paper)) |>
   mutate(researchers_no_papers = if_else(n_papers == 0, "Yes", "No")) |>
   mutate(
@@ -2752,7 +2977,7 @@ save_tbl(
 cat("\n### Table S19 generated! ###\n")
 
 
-## Table S21 -----------------------------------------------------------------
+## Table S24 -----------------------------------------------------------------
 tbl_s21 <- df_by_experiment |>
   filter(Method == "PCR" | Method == "ALTPCR") |>
   filter(MA_Dist == "t") |>
@@ -2827,18 +3052,18 @@ tbl_s21 <- tbl_s21 |>
   hline(i = 5:6) |>
   set_header_labels(MetricShortName = "By experiment") |>
   add_footer_lines(value = as_paragraph(footer_text_tbl_s21)) |>
-  add_header_lines(values = paste0("Table S21 - Replication rates for PCR experiments using different aggregation methods. ")) |>
+  add_header_lines(values = paste0("Table S24 - Replication rates for PCR experiments using different aggregation methods. ")) |>
   bold(i = 2, part = "header") |>
   set_table_properties(layout = "autofit")
 
 ### Saving ----
 save_tbl(
   tbl_s21,
-  paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S21.docx")
+  paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S24.docx")
 )
-cat("\n### Table S21 generated! ###\n")
+cat("\n### Table S24 generated! ###\n")
 
-## Table S20 -----------------------------------------------------------------
+## Table S23 -----------------------------------------------------------------
 tbl_s20 <- df_by_experiment |>
   filter(Method == "MTT" | Method == "ALTMTT") |>
   filter(MA_Dist == "t") |>
@@ -3003,19 +3228,19 @@ tbl_s20 <- tbl_s20 |>
   hline(i = 5:6) |>
   set_header_labels(MetricShortName = "By experiment") |>
   add_footer_lines(value = as_paragraph(footer_text_tbl_s20)) |>
-  add_header_lines(values = paste0("Table S20 - Replication rates for MTT experiments using paired vs original (non-paired) analyses. ")) |>
+  add_header_lines(values = paste0("Table S23 - Replication rates for MTT experiments using paired vs original (non-paired) analyses. ")) |>
   bold(i = 2, part = "header") |>
   set_table_properties(layout = "autofit")
 
 ### Saving ----
 save_tbl(
   tbl_s20,
-  paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S20.docx")
+  paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S23.docx")
 )
-cat("\n### Table S20 generated! ###\n")
+cat("\n### Table S23 generated! ###\n")
 
 
-## Table S25 ---------------------------------------------------------------
+## Table S28 ---------------------------------------------------------------
 df_coord_difficulties <- read_excel("other-data/Coordinating team assessment of difficulties.xlsx") |>
   clean_names() |>
   select(categoria, dificuldade, soma_um)
@@ -3061,18 +3286,18 @@ tbl_s25 <- df_coord_difficulties |>
   rename(Difficulty = dificuldade) |>
   rename(Rating = soma) |>
   flextable() |>
-  add_name("Table S25 – Project difficulties - Coordinating team assessment") |>
+  add_name("Table S28 – Project difficulties - Coordinating team assessment") |>
   set_table_properties(layout = "autofit")
 
 ### Saving ----
 save_tbl(
   list(tbl_s25),
-  paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S25.docx")
+  paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S28.docx")
 )
 
-cat("\n### Table S25 generated! ###\n")
+cat("\n### Table S28 generated! ###\n")
 
-## Table S22 ---------------------------------------------------------------
+## Table S25 ---------------------------------------------------------------
 # Survey participant demographics
 
 ### Data loading and cleaning ----
@@ -3091,6 +3316,8 @@ df_participants <- read.csv2("other-data/survey-data/joined_participant_informat
     ),
     # Fix academic title
     Highest_academic_title = if_else(Highest_academic_title_other == "Pos Doc", "PhD", Highest_academic_title, Highest_academic_title),
+    # Fold the free-text "Other" research area "biochemistry" into Life and health sciences
+    Research_area1 = if_else(Research_area12 %in% "biochemistry", "Life and health sciences", Research_area1),
     # Shorten country name
     Country_of_birth = str_replace(Country_of_birth, "United Kingdom of Great Britain and Northern Ireland", "United Kingdom")
   ) |>
@@ -3120,7 +3347,7 @@ summarize_vars <- function(df, group_col = NULL) {
   # Categorical: n (%)
   cat_vars <- c("Gender", "BRI_member", "Geographical_location", "Highest_academic_title", 
                 "Institutional_position", "Theoretical_knowledge", "Practical_knowledge", 
-                "Stats_knowledge", "Research_area1")
+                "Stats_knowledge")
   
   cat_summary <- map_df(cat_vars, function(v) {
     df |>
@@ -3130,7 +3357,16 @@ summarize_vars <- function(df, group_col = NULL) {
       select(Variable, Label, Stat)
   })
   
-  bind_rows(num_summary, cat_summary)
+  # Research area: multiple choice (one column per area), so % uses all participants as denominator
+  area_summary <- df |>
+    select(paste0("Research_area", 1:11)) |>
+    pivot_longer(everything(), values_to = "Label") |>
+    filter(!is.na(Label)) |>
+    count(Label) |>
+    mutate(Variable = "Research_area", Stat = sprintf("%d (%d%%)", n, round(100 * n / nrow(df)))) |>
+    select(Variable, Label, Stat)
+  
+  bind_rows(num_summary, cat_summary, area_summary)
 }
 
 ### Generate summaries by technique ----
@@ -3151,12 +3387,16 @@ label_order <- tribble(
   "Highest_academic_title", "PhD", 1, "Highest_academic_title", "Master's", 2,
   "Institutional_position", "Professor", 1, "Institutional_position", "Post-doc/Research associate", 2,
   "Institutional_position", "PhD student", 3, "Institutional_position", "Master's student", 4,
-  "Institutional_position", "Technician", 5, "Institutional_position", "Other (please specify)", 6
+  "Institutional_position", "Technician", 5, "Institutional_position", "Other (please specify)", 6,
+  "Research_area", "Life and health sciences", 1, "Research_area", "Social sciences/Psychology", 2,
+  "Research_area", "Chemistry", 3, "Research_area", "Earth sciences", 4,
+  "Research_area", "Computational science", 5, "Research_area", "Engineering", 6,
+  "Research_area", "Physics", 7
 )
 
 # Variable display order
 var_order <- c("Age", "Gender", "BRI_member", "Geographical_location", "Years_in_research",
-               "Highest_academic_title", "Institutional_position", "Research_area1",
+               "Highest_academic_title", "Institutional_position", "Research_area",
                "Theoretical_knowledge", "Practical_knowledge", "Stats_knowledge", "General_rep_rate")
 
 tbl_s21_data <- all_summaries |>
@@ -3164,8 +3404,6 @@ tbl_s21_data <- all_summaries |>
   arrange(factor(Variable, levels = var_order), order) |>
   select(-order) |>
   pivot_wider(names_from = Technique, values_from = Stat, values_fill = "0 (0%)") |>
-  # Rename Research_area1 for display
-  mutate(Variable = if_else(Variable == "Research_area1", "Research_area", Variable)) |>
   # Collapse rows by variable
   group_by(Variable) |>
   summarise(
@@ -3187,17 +3425,18 @@ tbl_s21_data <- all_summaries |>
 ### Create flextable ----
 tbl_s22 <- tbl_s21_data |>
   flextable() |>
-  add_header_lines(values = "Table S22 – Survey participant demographics") |>
+  add_header_lines(values = "Table S25 – Survey participant demographics") |>
   bold(i = 1, part = "header") |>
+  add_footer_lines("Research area: participants could select more than one area, so percentages add up to more than 100%.") |>
   set_table_properties(layout = "autofit")
 
 ### Saving ----
 save_tbl(
   list(tbl_s22),
-  paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S22.docx")
+  paste0("output/", results_path, "/_manuscript figures and tables", "/tables/Table S25.docx")
 )
 
-cat("\n### Table S22 generated! ###\n")
+cat("\n### Table S25 generated! ###\n")
 
 ## Text-Cited Numbers ------------------------------------------------------
 
@@ -3278,7 +3517,7 @@ for (i in 1:nrow(result_d)) {
 
 # e) Wilcoxon signed-rank test: mean_abs_diff_reps vs mean_abs_diff_reps_orig (excluding ALTPCR)
 result_e <- df_assessment_by_experiment |>
-  filter(!str_detect(EXP, "ALTPCR")) |>
+  filter(category %in% c("EPM","PCR","MTT")) |>
   summarise(
     p_value = wilcox.test(mean_abs_diff_reps, mean_abs_diff_reps_orig, paired = TRUE, na.action = na.omit)$p.value,
     statistic = wilcoxonZ(mean_abs_diff_reps, mean_abs_diff_reps_orig, paired = TRUE)

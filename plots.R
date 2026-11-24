@@ -2124,7 +2124,7 @@ plot_original_sd_mean_regression <- function(
   }
 
   if (nrow(original_data) != 60 || n_distinct(original_data$EXP) != 60) {
-    stop("Figure S10 expects exactly 60 unique source experiments")
+    stop("The original SD-vs-mean figure expects exactly 60 unique source experiments")
   }
 
   expected_mtt_percentage_experiments <- c(
@@ -2313,7 +2313,7 @@ plot_original_sd_mean_regression <- function(
     nrow(arm_data) != 120 ||
       n_distinct(paste(arm_data$EXP, arm_data$arm)) != 120
   ) {
-    stop("Figure S10 expects exactly 120 unique source arms")
+    stop("The original SD-vs-mean figure expects exactly 120 unique source arms")
   }
 
   included_data <- arm_data |>
@@ -2366,7 +2366,7 @@ plot_original_sd_mean_regression <- function(
       !all(normalized_zero_control)
   ) {
     stop(
-      "Figure S10 expects 112 included arms and eight normalized ",
+      "The original SD-vs-mean figure expects 112 included arms and eight normalized ",
       "zero-SD control exclusions"
     )
   }
@@ -2382,7 +2382,7 @@ plot_original_sd_mean_regression <- function(
     unname(as.integer(study_arm_counts)),
     unname(as.integer(expected_study_arm_counts))
   )) {
-    stop("The Figure S10 study-arm counts no longer match the audited data")
+    stop("The original SD-vs-mean figure study-arm counts no longer match the audited data")
   }
 
   excluded_experiment_ids <- excluded_data |>
@@ -2815,6 +2815,12 @@ plot_specification_curve <- function(results_path, include_method, suffix = "") 
         Level,
         "Set of replications" ~ "Aggregate of replications",
         .default = Level
+      ),
+      ES_Correction = case_match(
+        ES_Correction,
+        "Without correction" ~ "Without ES correction",
+        "With correction" ~ "With ES correction",
+        .default = ES_Correction
       )
     )
 
@@ -2855,9 +2861,9 @@ plot_specification_curve <- function(results_path, include_method, suffix = "") 
     metric_order <- metric_order[metric_order %in% unique(AGGDATA_TOG$Metric)]
     
     indiv_metric_order <- c(
-      "Subjectively replicated (Indiv)",
       "Replication in original CI (Indiv)",
-      "Same-sign significance (Indiv)"
+      "Same-sign significance (Indiv)",
+      "Subjectively replicated (Indiv)"
     )
     indiv_metric_order <- indiv_metric_order[indiv_metric_order %in% unique(AGGDATA_TOG$Metric)]
     
@@ -2877,7 +2883,7 @@ plot_specification_curve <- function(results_path, include_method, suffix = "") 
     )
     inclusion_order <- inclusion_order[inclusion_order %in% inclusion_levels]
     
-    es_correction_levels <- c("Without correction", "With correction")
+    es_correction_levels <- c("Without ES correction", "With ES correction")
     es_correction_order <- es_correction_levels[es_correction_levels %in% unique(AGGDATA_TOG$ES_Correction)]
 
     ma_dist_order <- c(
@@ -2954,9 +2960,9 @@ plot_specification_curve <- function(results_path, include_method, suffix = "") 
     metric_order <- metric_order[metric_order %in% unique(AGGDATA_TOG$Metric)]
     
     indiv_metric_order <- c(
-      "Subjectively replicated (Indiv)",
       "Replication in original CI (Indiv)",
-      "Same-sign significance (Indiv)"
+      "Same-sign significance (Indiv)",
+      "Subjectively replicated (Indiv)"
     )
     indiv_metric_order <- indiv_metric_order[indiv_metric_order %in% unique(AGGDATA_TOG$Metric)]
     
@@ -2979,7 +2985,7 @@ plot_specification_curve <- function(results_path, include_method, suffix = "") 
     pcr_order <- c("PCR (log)", "PCR (linear)")
     mtt_order <- c("MTT (paired)", "MTT (original)")
     
-    es_correction_levels <- c("Without correction", "With correction")
+    es_correction_levels <- c("Without ES correction", "With ES correction")
     es_correction_order <- es_correction_levels[es_correction_levels %in% unique(AGGDATA_TOG$ES_Correction)]
 
     ma_dist_order <- c(
@@ -3048,7 +3054,7 @@ plot_specification_curve <- function(results_path, include_method, suffix = "") 
       geom = "text", x = 2, y = quartiles[3] + 0.1,
       label = paste0("Median: ", quartiles[2] * 100, "%\nIQR: [", quartiles[1] * 100, "%, ", quartiles[3] * 100, "%]"), hjust = 0
     ) +
-    labs(x = "", y = "Reproducibility Rate") +
+    labs(x = "", y = "Replication Rate") +
     scale_y_continuous(limits = c(0, 1), breaks = c(0, 0.25, 0.5, 0.75, 1), labels = scales::label_percent()) + 
     theme_minimal() +
     theme(
