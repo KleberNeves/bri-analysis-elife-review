@@ -1736,18 +1736,17 @@ cat("\n### Table S1 generated! ###\n")
 
 ## Table S2 ----------------------------------------------------------------
 theme_gtsummary_language(language = "en", big.mark = "")
-
+reference_year <- 2025
 df_authorship_list <- read_excel("other-data/authorship_list.xlsx") |> clean_names()
 
 df_authorship_list <- df_authorship_list |>
   dplyr::distinct(author, .keep_all = T) |> 
   mutate(year_first_paper = as.numeric(year_first_paper)) |>
-  mutate(highest_degree = factor(highest_degree, labels = c("Doctorate", "High School", "Undergraduate Degree", "Master's Degree"))) |>
+  mutate(highest_degree = factor(highest_degree, levels = c("Doctorate", "Master's Degree", "Undergraduate Degree", "High School"))) |>
   mutate(ruf2023 = as.numeric(ruf2023)) |>
   mutate(geographic_region = if_else(geographic_region == "?", NA, geographic_region)) |>
   mutate(geographic_region = factor(geographic_region, labels = c("Center-West", "Northeast", "Southeast", "South"))) |>
-  mutate(today_date = ymd(today())) |>
-  mutate(years_since_first_paper = year(today_date) - year_first_paper) |>
+  mutate(years_since_first_paper = reference_year - year_first_paper) |>
   mutate(years_since_first_paper = if_else(is.na(years_since_first_paper), 0, years_since_first_paper)) |>
   mutate(researchers_no_papers = if_else(n_papers == 0, "Yes", "No")) |>
   mutate(
@@ -3317,6 +3316,8 @@ df_participants <- read.csv2("other-data/survey-data/joined_participant_informat
     ),
     # Fix academic title
     Highest_academic_title = if_else(Highest_academic_title_other == "Pos Doc", "PhD", Highest_academic_title, Highest_academic_title),
+    # Fold the free-text "Other" research area "biochemistry" into Life and health sciences
+    Research_area1 = if_else(Research_area12 %in% "biochemistry", "Life and health sciences", Research_area1),
     # Shorten country name
     Country_of_birth = str_replace(Country_of_birth, "United Kingdom of Great Britain and Northern Ireland", "United Kingdom")
   ) |>
@@ -3346,7 +3347,7 @@ summarize_vars <- function(df, group_col = NULL) {
   # Categorical: n (%)
   cat_vars <- c("Gender", "BRI_member", "Geographical_location", "Highest_academic_title", 
                 "Institutional_position", "Theoretical_knowledge", "Practical_knowledge", 
-                "Stats_knowledge", "Research_area1")
+                "Stats_knowledge")
   
   cat_summary <- map_df(cat_vars, function(v) {
     df |>
@@ -3356,7 +3357,16 @@ summarize_vars <- function(df, group_col = NULL) {
       select(Variable, Label, Stat)
   })
   
-  bind_rows(num_summary, cat_summary)
+  # Research area: multiple choice (one column per area), so % uses all participants as denominator
+  area_summary <- df |>
+    select(paste0("Research_area", 1:11)) |>
+    pivot_longer(everything(), values_to = "Label") |>
+    filter(!is.na(Label)) |>
+    count(Label) |>
+    mutate(Variable = "Research_area", Stat = sprintf("%d (%d%%)", n, round(100 * n / nrow(df)))) |>
+    select(Variable, Label, Stat)
+  
+  bind_rows(num_summary, cat_summary, area_summary)
 }
 
 ### Generate summaries by technique ----
@@ -3377,12 +3387,16 @@ label_order <- tribble(
   "Highest_academic_title", "PhD", 1, "Highest_academic_title", "Master's", 2,
   "Institutional_position", "Professor", 1, "Institutional_position", "Post-doc/Research associate", 2,
   "Institutional_position", "PhD student", 3, "Institutional_position", "Master's student", 4,
-  "Institutional_position", "Technician", 5, "Institutional_position", "Other (please specify)", 6
+  "Institutional_position", "Technician", 5, "Institutional_position", "Other (please specify)", 6,
+  "Research_area", "Life and health sciences", 1, "Research_area", "Social sciences/Psychology", 2,
+  "Research_area", "Chemistry", 3, "Research_area", "Earth sciences", 4,
+  "Research_area", "Computational science", 5, "Research_area", "Engineering", 6,
+  "Research_area", "Physics", 7
 )
 
 # Variable display order
 var_order <- c("Age", "Gender", "BRI_member", "Geographical_location", "Years_in_research",
-               "Highest_academic_title", "Institutional_position", "Research_area1",
+               "Highest_academic_title", "Institutional_position", "Research_area",
                "Theoretical_knowledge", "Practical_knowledge", "Stats_knowledge", "General_rep_rate")
 
 tbl_s21_data <- all_summaries |>
@@ -3390,8 +3404,6 @@ tbl_s21_data <- all_summaries |>
   arrange(factor(Variable, levels = var_order), order) |>
   select(-order) |>
   pivot_wider(names_from = Technique, values_from = Stat, values_fill = "0 (0%)") |>
-  # Rename Research_area1 for display
-  mutate(Variable = if_else(Variable == "Research_area1", "Research_area", Variable)) |>
   # Collapse rows by variable
   group_by(Variable) |>
   summarise(
@@ -3415,6 +3427,7 @@ tbl_s22 <- tbl_s21_data |>
   flextable() |>
   add_header_lines(values = "Table S25 – Survey participant demographics") |>
   bold(i = 1, part = "header") |>
+  add_footer_lines("Research area: participants could select more than one area, so percentages add up to more than 100%.") |>
   set_table_properties(layout = "autofit")
 
 ### Saving ----

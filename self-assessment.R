@@ -300,7 +300,7 @@ tbl_s23 <- cat_protocol |>
       mutate(protocol_labels = protocol_labels_fig) |>
       slice(6)
   ) |>
-  add_row(protocol_labels = "Infrasctructure/logistics") |>
+  add_row(protocol_labels = "Infrastructure/logistics") |>
   add_row(
     cat_protocol |>
       mutate(protocol_labels = protocol_labels_fig) |>
