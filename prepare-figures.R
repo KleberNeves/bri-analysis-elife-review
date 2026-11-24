@@ -19,6 +19,13 @@ paper_fig_path = paste0("./output/", results_path, "/_manuscript figures and tab
 suppressWarnings({dir.create(paper_fig_path)})
 suppressWarnings({dir.create(paste0(paper_fig_path, "/tables"))})
 
+# Figures not cited in the manuscript go unnumbered into "other figures"
+other_fig_path = paste0("./output/", results_path, "/_manuscript figures and tables/other figures/")
+suppressWarnings({dir.create(other_fig_path)})
+
+# Remove previously exported figures so renamed or renumbered figures do not leave stale files
+file.remove(list.files(path = paper_fig_path, pattern = "^Figure_", full.names = TRUE))
+
 
 message(paste0("Saving figures and tables to ", results_path))
 
@@ -29,6 +36,10 @@ pwalk(figure_correspondence_table, function (code_generated_filename, manuscript
   if(type == "table"){
     fnt = paste0(paper_fig_path, "/tables/", str_to_title(type), " ", manuscript_name, str_extract(basename(fnf), "\\..+?$"))
   } 
+
+  if(type == "other figure"){
+    fnt = paste0(other_fig_path, manuscript_name, str_extract(basename(fnf), "\\..+?$"))
+  }
 
   if (!is.na(code_generated_filename)) {
     if (file.exists(fnf)) {

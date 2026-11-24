@@ -2124,7 +2124,7 @@ plot_original_sd_mean_regression <- function(
   }
 
   if (nrow(original_data) != 60 || n_distinct(original_data$EXP) != 60) {
-    stop("Figure S10 expects exactly 60 unique source experiments")
+    stop("The original SD-vs-mean figure expects exactly 60 unique source experiments")
   }
 
   expected_mtt_percentage_experiments <- c(
@@ -2313,7 +2313,7 @@ plot_original_sd_mean_regression <- function(
     nrow(arm_data) != 120 ||
       n_distinct(paste(arm_data$EXP, arm_data$arm)) != 120
   ) {
-    stop("Figure S10 expects exactly 120 unique source arms")
+    stop("The original SD-vs-mean figure expects exactly 120 unique source arms")
   }
 
   included_data <- arm_data |>
@@ -2366,7 +2366,7 @@ plot_original_sd_mean_regression <- function(
       !all(normalized_zero_control)
   ) {
     stop(
-      "Figure S10 expects 112 included arms and eight normalized ",
+      "The original SD-vs-mean figure expects 112 included arms and eight normalized ",
       "zero-SD control exclusions"
     )
   }
@@ -2382,7 +2382,7 @@ plot_original_sd_mean_regression <- function(
     unname(as.integer(study_arm_counts)),
     unname(as.integer(expected_study_arm_counts))
   )) {
-    stop("The Figure S10 study-arm counts no longer match the audited data")
+    stop("The original SD-vs-mean figure study-arm counts no longer match the audited data")
   }
 
   excluded_experiment_ids <- excluded_data |>
