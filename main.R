@@ -117,6 +117,7 @@ for (es_corr in c(FALSE, TRUE)) {
     if (
       !(setcol %in%
         c(
+          "analysis_only_80_power_a_posteriori_T",
           "analysis_only_80_power_a_posteriori_Z",
           "analysis_only_80_power_a_posteriori_KNHA"
         ))
